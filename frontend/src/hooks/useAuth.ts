@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api, { endpoints } from "@/lib/api";
 import { AxiosError } from "axios";
 import { ErrorResponse } from "@/types/api";
+import axios from "axios";
 
 export interface User {
   id: number;
@@ -15,24 +16,34 @@ export interface User {
   avatar?: string;
 }
 
-export interface AuthState {
+interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
 }
 
+const initialState: AuthState = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  error: null
+};
+
 export function useAuth() {
   const router = useRouter();
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null
-  });
+  const [state, setState] = useState<AuthState>(initialState);
+
+  // Use refs instead of localStorage to track auth checking state
+  const isCheckingAuthRef = useRef(false);
+  const lastCheckTimeRef = useRef(0);
 
   const setUser = useCallback((user: User | null) => {
-    setState((prev) => ({ ...prev, user, isAuthenticated: !!user }));
+    setState((prev) => ({
+      ...prev,
+      user,
+      isAuthenticated: !!user
+    }));
   }, []);
 
   const setLoading = useCallback((isLoading: boolean) => {
@@ -43,31 +54,66 @@ export function useAuth() {
     setState((prev) => ({ ...prev, error }));
   }, []);
 
-  // Load user from local storage on initial render
+  // Check if user is already authenticated on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      setLoading(true);
+    const loadUser = async () => {
       try {
-        // Check if we have a user in localStorage
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          setUser(user);
+        setLoading(true);
+
+        // Use refs instead of localStorage for tracking state
+        const currentTime = Date.now();
+
+        // If we've checked auth in the last 10 seconds, don't check again
+        // This prevents rapid successive auth checks causing the redirect loop
+        if (
+          isCheckingAuthRef.current ||
+          (currentTime - lastCheckTimeRef.current < 10000 &&
+            lastCheckTimeRef.current > 0)
+        ) {
+          console.log(
+            "Auth check already in progress or very recent, skipping..."
+          );
           setLoading(false);
           return;
         }
 
-        setUser(null);
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        localStorage.removeItem("user");
-        setUser(null);
+        // Set checking flag and update timestamp
+        isCheckingAuthRef.current = true;
+        lastCheckTimeRef.current = currentTime;
+
+        try {
+          // Try to get user data from server
+          const response = await api.get(endpoints.auth.user);
+
+          if (response.data) {
+            // Use user data from server
+            setUser(response.data);
+          } else {
+            setUser(null);
+          }
+        } catch (error: unknown) {
+          console.error("Error loading user:", error);
+
+          // If it's a 401 unauthorized, just set user to null without redirecting
+          // This is a normal case for guest users
+          if (axios.isAxiosError(error) && error.response?.status === 401) {
+            console.log("User not authenticated (normal for guest users)");
+            setUser(null);
+          } else {
+            // For other errors, also set user to null
+            console.error("Unexpected error checking auth:", error);
+            setUser(null);
+          }
+        } finally {
+          // Clear checking flag
+          isCheckingAuthRef.current = false;
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    loadUser();
   }, [setLoading, setUser]);
 
   const login = useCallback(
@@ -85,9 +131,11 @@ export function useAuth() {
         console.log("Login API response:", response.data);
 
         if (response.data.user) {
-          // Store user data in localStorage
-          localStorage.setItem("user", JSON.stringify(response.data.user));
           setUser(response.data.user);
+
+          // We don't need to manually store the tokens anymore
+          // as they are now stored in HTTP-only cookies by the server
+
           return true;
         } else {
           setError("Invalid response from server");
@@ -121,10 +169,12 @@ export function useAuth() {
 
       try {
         const response = await api.post(endpoints.auth.register, userData);
-        const { access, refresh, user } = response.data;
-        localStorage.setItem("token", access);
-        localStorage.setItem("refresh_token", refresh);
-        setUser(user);
+
+        // If registration also logs the user in and returns user data
+        if (response.data.user) {
+          setUser(response.data.user);
+        }
+
         return true;
       } catch (error: unknown) {
         const axiosError = error as AxiosError<ErrorResponse>;
@@ -146,8 +196,7 @@ export function useAuth() {
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      // Clear localStorage
-      localStorage.removeItem("user");
+      // Clear user state
       setUser(null);
       router.push("/");
     }

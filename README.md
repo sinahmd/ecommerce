@@ -1,4 +1,4 @@
-# E-Commerce Full Stack Application
+P# E-Commerce Full Stack Application
 
 A full-stack e-commerce application built with Next.js, React, Shadcn UI for the frontend and Django, Django REST Framework, and PostgreSQL for the backend.
 

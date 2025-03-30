@@ -48,42 +48,15 @@ def dashboard(request):
 def product_list_create(request):
     if request.method == 'GET':
         products = Product.objects.select_related('category').all()
-        data = [{
-            'id': product.id,
-            'name': product.name,
-            'price': float(product.price),
-            'stock': product.stock,
-            'category': {
-                'id': product.category.id,
-                'name': product.category.name
-            },
-            'image': request.build_absolute_uri(product.image.url) if product.image else None,
-            'is_available': product.available,
-            'created_at': product.created_at
-        } for product in products]
-        return Response(data)
+        serializer = AdminProductSerializer(products, many=True, context={'request': request})
+        return Response(serializer.data)
     
     elif request.method == 'POST':
-        try:
-            category = Category.objects.get(id=request.data.get('category_id'))
-            product = Product.objects.create(
-                name=request.data.get('name'),
-                price=request.data.get('price'),
-                stock=request.data.get('stock', 0),
-                category=category,
-                description=request.data.get('description', ''),
-                image=request.data.get('image'),
-                available=request.data.get('is_available', True)
-            )
-            return Response({
-                'id': product.id,
-                'name': product.name,
-                'message': 'Product created successfully'
-            }, status=status.HTTP_201_CREATED)
-        except Category.DoesNotExist:
-            return Response({'error': 'Category not found'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AdminProductSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -94,42 +67,15 @@ def product_detail(request, pk):
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        data = {
-            'id': product.id,
-            'name': product.name,
-            'price': float(product.price),
-            'stock': product.stock,
-            'category': {
-                'id': product.category.id,
-                'name': product.category.name
-            },
-            'description': product.description,
-            'image': request.build_absolute_uri(product.image.url) if product.image else None,
-            'is_available': product.available,
-            'created_at': product.created_at
-        }
-        return Response(data)
+        serializer = AdminProductSerializer(product, context={'request': request})
+        return Response(serializer.data)
 
     elif request.method == 'PUT':
-        try:
-            if 'category_id' in request.data:
-                category = Category.objects.get(id=request.data['category_id'])
-                product.category = category
-            
-            product.name = request.data.get('name', product.name)
-            product.price = request.data.get('price', product.price)
-            product.stock = request.data.get('stock', product.stock)
-            product.description = request.data.get('description', product.description)
-            if 'image' in request.data:
-                product.image = request.data['image']
-            product.available = request.data.get('is_available', product.available)
-            product.save()
-            
-            return Response({'message': 'Product updated successfully'})
-        except Category.DoesNotExist:
-            return Response({'error': 'Category not found'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AdminProductSerializer(product, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
         product.delete()
@@ -141,29 +87,15 @@ def product_detail(request, pk):
 def category_list_create(request):
     if request.method == 'GET':
         categories = Category.objects.all()
-        data = [{
-            'id': category.id,
-            'name': category.name,
-            'description': category.description,
-            'image': request.build_absolute_uri(category.image.url) if category.image else None,
-            'product_count': category.products.count()
-        } for category in categories]
-        return Response(data)
+        serializer = CategoryAdminSerializer(categories, many=True, context={'request': request})
+        return Response(serializer.data)
     
     elif request.method == 'POST':
-        try:
-            category = Category.objects.create(
-                name=request.data.get('name'),
-                description=request.data.get('description', ''),
-                image=request.data.get('image')
-            )
-            return Response({
-                'id': category.id,
-                'name': category.name,
-                'message': 'Category created successfully'
-            }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CategoryAdminSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -174,30 +106,15 @@ def category_detail(request, pk):
         return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        data = {
-            'id': category.id,
-            'name': category.name,
-            'description': category.description,
-            'image': request.build_absolute_uri(category.image.url) if category.image else None,
-            'product_count': category.products.count(),
-            'products': [{
-                'id': product.id,
-                'name': product.name,
-                'price': float(product.price)
-            } for product in category.products.all()]
-        }
-        return Response(data)
+        serializer = CategoryAdminSerializer(category, context={'request': request})
+        return Response(serializer.data)
 
     elif request.method == 'PUT':
-        try:
-            category.name = request.data.get('name', category.name)
-            category.description = request.data.get('description', category.description)
-            if 'image' in request.data:
-                category.image = request.data['image']
-            category.save()
-            return Response({'message': 'Category updated successfully'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CategoryAdminSerializer(category, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
         if category.products.exists():

@@ -18,17 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework_simplejwt.views import TokenRefreshView
+from users.csrf_views import get_csrf_token
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # API endpoints
     path('api/store/', include('store.urls')),
     path('api/users/', include('users.urls')),
     path('api/checkout/', include('checkout.urls')),
     path('api/admin-panel/', include('admin_panel.urls')),
-    path('api/auth/', include('users.auth_urls')),
-    path('api/users/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/dashboard/', include('dashboard.urls')),
+    
+    # Authentication endpoints
+    path('api/auth/', include('users.auth_urls')),
+    path('api/csrf/', get_csrf_token, name='csrf_token'),
 ]
 
 # Add media files URL in development

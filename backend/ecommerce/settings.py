@@ -176,6 +176,17 @@ CORS_ALLOW_HEADERS = [
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = 'localhost'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_AGE = 31449600  # 1 year in seconds
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -207,3 +218,8 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SAMESITE': 'Lax',
     'AUTH_COOKIE_PATH': '/',
 }
+
+# ZarinPal Payment Gateway Settings
+ZARINPAL_MERCHANT_ID = '1344b5d4-0048-11e8-94db-005056a205be'  # This is a test merchant ID
+ZARINPAL_SANDBOX = True  # Use sandbox for testing
+FRONTEND_URL = 'http://localhost:3000'  # Your frontend URL for redirects

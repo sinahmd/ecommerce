@@ -1,271 +1,251 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCartContext } from '@/providers/CartProvider';
-import { useAuthContext } from '@/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { getFullImageUrl } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { ShoppingBag } from 'lucide-react';
 import api, { endpoints } from '@/lib/api';
-import Image from 'next/image';
+import { useCartContext } from '@/providers/CartProvider';
+
+interface CartItem {
+  id: number;
+  quantity: number;
+  total_price: number;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    image_url?: string;
+  }
+}
+
+interface CheckoutFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, clearCart } = useCartContext();
-  const { user } = useAuthContext();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+  const { toast } = useToast();
+  const { cart } = useCartContext();
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState<CheckoutFormData>({
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     address: '',
-    city: '',
-    state: '',
-    country: '',
-    zip_code: ''
   });
 
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to complete your purchase.",
-        variant: "destructive",
-      });
-      router.push('/login');
-      return;
+  const cartItems: CartItem[] = cart.map(item => ({
+    id: item.id,
+    quantity: item.quantity,
+    total_price: item.price * item.quantity,
+    product: {
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image_url: item.images?.[0],
     }
+  }));
 
-    // Pre-fill form with user data if available
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-      }));
-    }
-  }, [user, router]);
+  const getTotalPrice = () => {
+    return cartItems.reduce((total, item) => total + item.total_price, 0);
+  };
 
-  const subtotal = cart?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
-  const shipping = 10; // Fixed shipping cost for demo
-  const total = subtotal + shipping;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    
+    if (cartItems.length === 0) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to complete your purchase.",
-        variant: "destructive",
+        title: 'Empty Cart',
+        description: 'Your cart is empty. Please add items before checkout.',
+        variant: 'destructive',
       });
-      router.push('/login');
       return;
     }
-
-    setIsProcessing(true);
+    
+    setSubmitting(true);
+    
     try {
-      const response = await api.post(endpoints.checkout.process, {
-        ...formData,
-        items: cart?.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity
-        }))
+      // Format order items for the API
+      const orderItems = cartItems.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity
+      }));
+      
+      // Create the order using the endpoint from our API client
+      const response = await api.post(endpoints.checkout.createOrder, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        items: orderItems
       });
 
-      if (response.data) {
-        clearCart?.();
-        toast({
-          title: "Order Placed Successfully",
-          description: "Thank you for your purchase!",
-        });
-        router.push('/profile?tab=orders');
+      // Initiate ZarinPal payment using the endpoint from our API client
+      const paymentResponse = await api.post(
+        endpoints.checkout.payment(response.data.order_id)
+      );
+      
+      if (paymentResponse.data.payment_url) {
+        // Redirect to ZarinPal payment page
+        window.location.href = paymentResponse.data.payment_url;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
       toast({
-        title: "Checkout Failed",
-        description: "There was an error processing your order. Please try again.",
-        variant: "destructive",
+        title: 'Checkout Failed',
+        description: 'An error occurred during checkout',
+        variant: 'destructive',
       });
+      
+      router.push('/checkout/failed');
     } finally {
-      setIsProcessing(false);
+      setSubmitting(false);
     }
   };
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="container py-12">
+    <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name">First Name</Label>
-                    <Input
-                      id="first_name"
-                      value={formData.first_name}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last_name">Last Name</Label>
-                    <Input
-                      id="last_name"
-                      value={formData.last_name}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip_code">ZIP Code</Label>
-                    <Input
-                      id="zip_code"
-                      value={formData.zip_code}
-                      onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isProcessing}>
-                  {isProcessing ? "Processing..." : "Place Order"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {cart?.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
-                    <div className="relative h-16 w-16">
-                      {item.images && item.images[0] && (
-                        <Image
-                          src={getFullImageUrl(item.images[0])}
-                          alt={item.name}
-                          fill
-                          className="object-cover rounded-md"
-                        />
-                      )}
+      
+      {cartItems.length === 0 ? (
+        <Card className="max-w-md mx-auto">
+          <CardContent className="pt-6 text-center">
+            <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground mb-4">Your cart is empty</p>
+            <Button onClick={() => router.push('/products')}>
+              Browse Products
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <form onSubmit={handleSubmit}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shipping Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input 
+                        id="firstName" 
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantity} x ${item.price}
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input 
+                        id="lastName" 
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
-                    <div className="font-medium">
-                      ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email" 
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input 
+                      id="address" 
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </CardContent>
+                
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={submitting}>
+                    {submitting ? 'Processing...' : `Pay ${getTotalPrice().toLocaleString()} IRR`}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </div>
+          
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {cartItems.map(item => (
+                  <div key={item.id} className="flex justify-between">
+                    <div>
+                      <p className="font-medium">{item.product.name}</p>
+                      <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                     </div>
+                    <p>{item.total_price.toLocaleString()} IRR</p>
                   </div>
                 ))}
-
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between">
+                
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{getTotalPrice().toLocaleString()} IRR</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm mt-2">
                     <span>Shipping</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>Free</span>
                   </div>
-                  <div className="flex justify-between font-medium">
+                  <div className="flex justify-between font-bold text-lg mt-4">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{getTotalPrice().toLocaleString()} IRR</span>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
-} 
+}

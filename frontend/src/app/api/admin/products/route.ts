@@ -1,68 +1,75 @@
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const access_token = cookieStore.get("access_token");
 
-  if (!token) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const response = await fetch(`${apiUrl}/api/admin-panel/products/`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      cache: "no-store"
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token.value}`
+        }
+      }
+    );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", errorText);
-      throw new Error(`Failed to fetch products: ${response.status}`);
+      throw new Error("Failed to fetch products");
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching products:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const access_token = cookieStore.get("access_token");
 
-  if (!token) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const formData = await request.formData();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    const response = await fetch(`${apiUrl}/api/admin-panel/products/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: formData
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${access_token.value}`
+        },
+        body: formData
+      }
+    );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", errorText);
-      throw new Error(`Failed to create product: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to create product");
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error creating product:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error"
+      },
+      { status: 500 }
+    );
   }
 }

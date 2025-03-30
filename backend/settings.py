@@ -118,4 +118,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-} 
+}
+
+# ZarinPal Payment Gateway Settings
+ZARINPAL_MERCHANT_ID = '1344b5d4-0048-11e8-94db-005056a205be'  # Replace with your actual merchant ID in production
+ZARINPAL_SANDBOX = True  # Set to False in production
+FRONTEND_URL = 'http://localhost:3000'  # Frontend URL for redirects 

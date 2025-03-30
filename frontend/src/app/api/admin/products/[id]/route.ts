@@ -1,41 +1,39 @@
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const access_token = cookieStore.get("access_token");
 
-  if (!token) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const response = await fetch(
-      `${apiUrl}/api/admin-panel/products/${params.id}/`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/${params.id}/`,
       {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        cache: "no-store"
+          Authorization: `Bearer ${access_token.value}`
+        }
       }
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", errorText);
-      throw new Error(`Failed to fetch product: ${response.status}`);
+      throw new Error("Failed to fetch product");
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching product:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -44,38 +42,41 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const access_token = cookieStore.get("access_token");
 
-  if (!token) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const formData = await request.formData();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     const response = await fetch(
-      `${apiUrl}/api/admin-panel/products/${params.id}/`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/${params.id}/`,
       {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${access_token.value}`
         },
         body: formData
       }
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", errorText);
-      throw new Error(`Failed to update product: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update product");
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error updating product:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error"
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -84,33 +85,42 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const access_token = cookieStore.get("access_token");
 
-  if (!token) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const response = await fetch(
-      `${apiUrl}/api/admin-panel/products/${params.id}/`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/${params.id}/`,
       {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${access_token.value}`
         }
       }
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", errorText);
-      throw new Error(`Failed to delete product: ${response.status}`);
+      // Try to parse error if it's JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete product");
+      } else {
+        throw new Error(`Failed to delete product: ${response.status}`);
+      }
     }
 
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting product:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error"
+      },
+      { status: 500 }
+    );
   }
 }

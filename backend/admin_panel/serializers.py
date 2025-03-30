@@ -8,6 +8,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
 from random import randint
+from django.utils.text import slugify
 
 User = get_user_model()
 
@@ -36,6 +37,9 @@ class AdminCategorySerializer(serializers.ModelSerializer):
 
 class AdminProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    image = serializers.ImageField(required=False)
+    slug = serializers.SlugField(required=False)
     
     class Meta:
         model = Product
@@ -44,6 +48,26 @@ class AdminProductSerializer(serializers.ModelSerializer):
             'stock', 'available', 'category', 'category_name',
             'created_at', 'updated_at'
         ]
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Name is required")
+        return value
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Price must be greater than 0")
+        return value
+
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Stock cannot be negative")
+        return value
+
+    def create(self, validated_data):
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
@@ -71,6 +95,7 @@ class DashboardStatsSerializer(serializers.Serializer):
 class CategoryAdminSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False)
+    slug = serializers.SlugField(required=False)
 
     class Meta:
         model = Category
@@ -78,6 +103,16 @@ class CategoryAdminSerializer(serializers.ModelSerializer):
 
     def get_product_count(self, obj):
         return obj.products.count()
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Name is required")
+        return value
+
+    def create(self, validated_data):
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
 
 class UserAdminSerializer(serializers.ModelSerializer):
     orders_count = serializers.SerializerMethodField()

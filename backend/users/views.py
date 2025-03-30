@@ -125,10 +125,11 @@ class LoginView(views.APIView):
             
             # Generate tokens
             refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+            # Create response with user data
+            response = Response({
                 'user': {
                     'id': user.id,
                     'email': user.email,
@@ -138,30 +139,57 @@ class LoginView(views.APIView):
                 }
             })
             
+            # Set token cookies
+            response.set_cookie(
+                settings.SIMPLE_JWT['AUTH_COOKIE'],
+                access_token,
+                max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(),
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+            )
+            
+            response.set_cookie(
+                settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                refresh_token,
+                max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds(),
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+            )
+            
+            return response
+            
         except Exception as e:
             return Response({
                 'detail': 'An error occurred during login.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):
-    permission_classes = (IsAuthenticated,)
-
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
-        try:
-            refresh_token = request.data.get('refresh')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-                return Response(status=status.HTTP_205_RESET_CONTENT)
-            return Response(
-                {'error': 'No refresh token provided'},
-                status=status.HTTP_400_BAD_REQUEST
+        """
+        Logout a user by clearing their auth cookies
+        """
+        response = Response({"detail": "Successfully logged out."})
+        
+        # Clear auth cookies
+        if settings.SIMPLE_JWT.get('AUTH_COOKIE'):
+            response.delete_cookie(
+                settings.SIMPLE_JWT['AUTH_COOKIE'],
+                path=settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             )
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            
+        if settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH'):
+            response.delete_cookie(
+                settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                path=settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             )
+        
+        return response
 
 class UserView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -424,4 +452,100 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class CustomTokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Custom token refresh view that handles refresh tokens in cookies.
+        This allows the frontend to refresh tokens without needing to
+        extract the token from cookies.
+        """
+        try:
+            # Get the refresh token from cookies
+            refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+            
+            if not refresh_token:
+                return Response(
+                    {'detail': 'No refresh token provided'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create a RefreshToken instance
+            refresh = RefreshToken(refresh_token)
+            
+            # Get a new access token
+            access_token = str(refresh.access_token)
+            
+            # Create the response with an empty data payload
+            response = Response({})
+            
+            # Set the new access token cookie
+            response.set_cookie(
+                settings.SIMPLE_JWT['AUTH_COOKIE'],
+                access_token,
+                max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(),
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+            )
+            
+            # If ROTATE_REFRESH_TOKENS is True, also update the refresh token
+            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
+                # Get a new refresh token
+                new_refresh_token = str(refresh)
+                
+                # Set the new refresh token cookie
+                response.set_cookie(
+                    settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                    new_refresh_token,
+                    max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds(),
+                    httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                    secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                    path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+                )
+                
+                # If BLACKLIST_AFTER_ROTATION is True, blacklist the old token
+                if getattr(settings, 'REST_FRAMEWORK_SIMPLEJWT', {}).get(
+                    'BLACKLIST_AFTER_ROTATION', False
+                ):
+                    try:
+                        # Attempt to blacklist the old token
+                        from rest_framework_simplejwt.token_blacklist.models import (
+                            BlacklistedToken, OutstandingToken
+                        )
+                        
+                        outstanding_token = OutstandingToken.objects.get(
+                            token=refresh_token
+                        )
+                        BlacklistedToken.objects.get_or_create(
+                            token=outstanding_token
+                        )
+                    except ImportError:
+                        # If the blacklist app is not installed, log a warning
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(
+                            "The token has been rotated but the blacklist app is not "
+                            "installed. You should consider installing it."
+                        )
+                    except Exception as e:
+                        # If blacklisting fails for any other reason, log the error
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(
+                            f"An error occurred while blacklisting a rotated token: {e}"
+                        )
+            
+            return response
+            
+        except Exception as e:
+            # Handle any exceptions that might occur during token refresh
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
             )

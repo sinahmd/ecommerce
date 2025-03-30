@@ -18,7 +18,7 @@ const loginSchema = z.object({
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{email?: string, password?: string}>({});
+  const [errors, setErrors] = useState<{ email?: string, password?: string }>({});
   const router = useRouter();
   const { login, error: authError, isLoading } = useAuth();
 
@@ -39,7 +39,7 @@ export function LoginForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     const success = await login(email, password);
     if (success) {
       router.push("/account");
@@ -54,7 +54,7 @@ export function LoginForm() {
           Enter your credentials to sign in to your account
         </p>
       </div>
-      
+
       {authError && (
         <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
