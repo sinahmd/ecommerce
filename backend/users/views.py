@@ -453,7 +453,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 class CustomTokenRefreshView(APIView):
     permission_classes = [AllowAny]
     
@@ -549,3 +548,4 @@ class CustomTokenRefreshView(APIView):
                 {'detail': str(e)},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+

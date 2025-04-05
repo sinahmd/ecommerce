@@ -15,10 +15,11 @@ interface ProductFromAPI {
   description: string;
   price: number;
   stock: number;
-  category: {
+  categories: {
     id: number;
     name: string;
-  };
+  }[];
+  category_names: string[];
   image: string | null;
   available: boolean;
   created_at: string;
@@ -31,7 +32,7 @@ interface ProductForModal {
   description: string;
   price: number | string;
   stock: number | string;
-  category: number | string;
+  categories: number[] | string[];
   available: boolean;
   image?: string;
 }
@@ -71,16 +72,42 @@ export default function ProductsPage() {
   }, []);
 
   const handleEditClick = (product: ProductFromAPI) => {
+    console.log("Original product for edit:", product);
+    console.log("Categories from API:", product.categories);
+    
+    // Handle different formats of categories from API
+    // Sometimes categories come as array of objects, sometimes as array of numbers
+    let categoryIds: string[] = [];
+    
+    if (product.categories) {
+      if (product.categories.length > 0) {
+        // Check if categories are objects with id property or direct numbers
+        if (typeof product.categories[0] === 'object' && product.categories[0] !== null) {
+          // Categories are objects with id property
+          categoryIds = product.categories
+            .filter(cat => cat && cat.id !== undefined && cat.id !== null)
+            .map(cat => String(cat.id));
+        } else {
+          // Categories are direct number values
+          categoryIds = product.categories.map(cat => String(cat));
+        }
+      }
+    }
+    
+    console.log("Extracted and filtered category IDs:", categoryIds);
+    
     const modalProduct: ProductForModal = {
       id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
       stock: product.stock,
-      category: product.category.id,
+      categories: categoryIds,
       available: product.available,
       image: product.image || undefined
     };
+    
+    console.log("Prepared product for modal:", modalProduct);
     setSelectedProduct(modalProduct);
     setIsEditModalOpen(true);
   };
@@ -111,7 +138,7 @@ export default function ProductsPage() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -138,7 +165,24 @@ export default function ProductsPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{product.category?.name}</td>
+                <td className="px-6 py-4">
+                  <div className="max-w-xs">
+                    {product.category_names && product.category_names.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {product.category_names.map((catName, index) => (
+                          <span 
+                            key={index}
+                            className="px-2 py-1 bg-gray-100 text-xs rounded-full"
+                          >
+                            {catName}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">No categories</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">${product.price}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{product.stock}</td>
                 <td className="px-6 py-4 whitespace-nowrap">

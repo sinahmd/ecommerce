@@ -10,4 +10,5 @@ def get_csrf_token(request):
     The @ensure_csrf_cookie decorator forces a cookie to be set,
     which is then returned to the client.
     """
-    return JsonResponse({"detail": "CSRF cookie set"}) 
+    return JsonResponse({"detail": "CSRF cookie set"})
+ 

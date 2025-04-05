@@ -46,7 +46,7 @@ def product_list(request):
     # Filter products by category
     category_slug = request.query_params.get('category')
     if category_slug:
-        products = products.filter(category__slug=category_slug)
+        products = products.filter(categories__slug=category_slug)
     
     # Search products
     search_query = request.query_params.get('search')
@@ -69,7 +69,9 @@ def product_list(request):
 @permission_classes([AllowAny])
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, available=True)
-    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    # Get related products from the same category
+    related_categories = product.categories.all()
+    related_products = Product.objects.filter(categories__in=related_categories).exclude(id=product.id).distinct()[:4]
     
     return Response({
         'product': ProductSerializer(product).data,
@@ -87,7 +89,7 @@ class CategoryDetailView(APIView):
     def get(self, request, slug):
         try:
             category = Category.objects.get(slug=slug)
-            products = Product.objects.filter(category=category, available=True)
+            products = Product.objects.filter(categories__in=[category], available=True)
             
             category_serializer = CategorySerializer(category)
             products_serializer = ProductSerializer(products, many=True)

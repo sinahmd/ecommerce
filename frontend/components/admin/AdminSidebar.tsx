@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuthContext } from '@/providers/AuthProvider';
+import { useEffect } from 'react';
 import {
   HomeIcon,
   ShoppingBagIcon,
@@ -22,6 +24,16 @@ const navigation = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { user } = useAuthContext();
+
+  // Debug admin status
+  useEffect(() => {
+    if (user) {
+      console.log("AdminSidebar - User:", { role: user.role, isAdmin: user.role === 'admin' });
+    } else {
+      console.log("AdminSidebar - No user");
+    }
+  }, [user]);
 
   return (
     <div className="w-64 bg-white shadow-lg">
@@ -54,4 +66,4 @@ export default function AdminSidebar() {
       </nav>
     </div>
   );
-} 
+}

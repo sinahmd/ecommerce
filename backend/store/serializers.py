@@ -7,13 +7,19 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'description', 'image']
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category.name')
-    category_slug = serializers.ReadOnlyField(source='category.slug')
+    category_names = serializers.SerializerMethodField()
+    category_slugs = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'price', 'image', 
-            'stock', 'available', 'category', 'category_name', 'category_slug',
+            'stock', 'available', 'categories', 'category_names', 'category_slugs',
             'created_at', 'updated_at'
-        ] 
+        ]
+    
+    def get_category_names(self, obj):
+        return [category.name for category in obj.categories.all()]
+    
+    def get_category_slugs(self, obj):
+        return [category.slug for category in obj.categories.all()] 

@@ -26,7 +26,9 @@ class Category(models.Model):
         return reverse('category_detail', args=[self.slug])
 
 class Product(models.Model):
-    category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
+    # ManyToManyField for multiple categories
+    categories = models.ManyToManyField(Category, related_name='products', blank=True)
+    
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField(blank=True)
@@ -49,4 +51,7 @@ class Product(models.Model):
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
-        return reverse('product_detail', args=[self.category.slug, self.slug])
+        primary_category = self.categories.first()
+        if primary_category:
+            return reverse('product_detail', args=[primary_category.slug, self.slug])
+        return reverse('product_detail_no_category', args=[self.slug])

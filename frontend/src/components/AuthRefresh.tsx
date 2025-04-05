@@ -1,157 +1,105 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { endpoints } from '@/lib/api';
+import { useAuthContext } from '@/providers/AuthProvider';
+import api from '@/lib/api';
 
 /**
  * Component for silently managing token refresh and CSRF token retrieval
  * This component doesn't render anything but handles auth tokens in the background
  */
-const AuthRefresh: React.FC = () => {
-  // Using refs to track state without causing re-renders
-  const csrfTokenRef = useRef<string | null>(null);
-  const refreshAttemptCount = useRef(0);
-  const isRefreshing = useRef(false);
-  const refreshInterval = useRef<NodeJS.Timeout | null>(null);
-  const csrfInterval = useRef<NodeJS.Timeout | null>(null);
-  const checkUserInterval = useRef<NodeJS.Timeout | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export function AuthRefresh() {
+  const { user } = useAuthContext();
+  const [lastUserCheck, setLastUserCheck] = useState<number>(0);
+  const lastRefreshAttempt = useRef<number>(0);
+  const refreshCount = useRef<number>(0);
 
-  // Check if user is authenticated by looking for cookies
-  const checkUserAuthentication = () => {
-    // Check for access and refresh tokens in cookies
-    const hasAccessToken = document.cookie.includes('access_token');
-    const hasRefreshToken = document.cookie.includes('refresh_token');
-    
-    // Update authentication status
-    const authenticated = hasAccessToken || hasRefreshToken;
-    
-    // Only update state if changed (prevents unnecessary re-renders)
-    if (authenticated !== isAuthenticated) {
-      console.log(`Auth status changed: ${authenticated} (Access token: ${hasAccessToken}, Refresh token: ${hasRefreshToken})`);
-      setIsAuthenticated(authenticated);
-    }
-    
-    return authenticated;
-  };
-
-  // Function to get CSRF token and set it in cookies
+  // Fetch CSRF token from the server
   const fetchCsrfToken = async () => {
     try {
-      // Make a GET request to the CSRF endpoint to set the CSRF cookie
-      await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/csrf/`, {
-        withCredentials: true,
-      });
-      
-      // Get the CSRF token from cookies
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-      
-      if (token) {
-        csrfTokenRef.current = token;
-        console.log('CSRF token refreshed');
-      }
+      await api.get('/api/csrf/');
+      console.log('CSRF token refreshed successfully');
     } catch (error) {
       console.error('Error fetching CSRF token:', error);
     }
   };
 
-  // Function to refresh the auth token
+  // Refresh the auth token with throttling
   const refreshToken = async () => {
-    // Skip refresh if user is not authenticated or if already refreshing
-    if (!isAuthenticated || isRefreshing.current) return;
-    
-    // Check if user has refresh token in cookies
-    if (!document.cookie.includes('refresh_token')) {
-      console.log('No refresh token found, skipping refresh');
+    // Add throttling to prevent multiple refresh attempts in a short time
+    const now = Date.now();
+    if (now - lastRefreshAttempt.current < 60000) { // 1 minute between refresh attempts
+      console.log('Token refresh attempted too recently, skipping');
       return;
     }
-
+    
+    lastRefreshAttempt.current = now;
+    
     try {
-      isRefreshing.current = true;
-      refreshAttemptCount.current += 1;
-      
-      // Don't attempt more than 3 consecutive refreshes to prevent infinite loops
-      if (refreshAttemptCount.current > 3) {
-        console.error('Too many consecutive token refresh attempts, stopping');
-        refreshAttemptCount.current = 0; // Reset counter but continue with intervals
-        return;
-      }
-
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${endpoints.auth.refresh}`,
-        {},
-        { withCredentials: true }
-      );
-      
-      // Reset the attempt counter on success
-      refreshAttemptCount.current = 0;
+      console.log('Attempting to refresh auth token');
+      await api.post('/api/users/token/refresh/');
       console.log('Token refreshed successfully');
+      refreshCount.current = 0; // Reset counter on success
     } catch (error) {
       console.error('Error refreshing token:', error);
+      refreshCount.current += 1;
       
-      // If we get a 401/400 error, the refresh token is likely invalid
-      if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 400)) {
-        console.log('Token refresh failed with 401/400, reset counter');
-        refreshAttemptCount.current = 0;
-        
-        // Update authentication state after failed refresh
-        setTimeout(checkUserAuthentication, 100);
+      // If we've failed too many times in a row, back off
+      if (refreshCount.current > 3) {
+        console.log('Too many failed refresh attempts, backing off');
+        refreshCount.current = 0; // Reset counter
       }
-    } finally {
-      isRefreshing.current = false;
     }
   };
 
-  // Set up the initial CSRF token and auth check
+  // Check user authentication status with throttling
+  const checkUserAuth = async () => {
+    // Throttle user checks to avoid excessive API calls
+    const now = Date.now();
+    if (now - lastUserCheck < 60000) { // 1 minute minimum between checks
+      return;
+    }
+    
+    try {
+      console.log('Checking user authentication');
+      await api.get('/api/users/user/');
+      console.log('User auth check successful');
+      setLastUserCheck(now);
+    } catch (error) {
+      // Only log the error for debugging
+      console.error('Error checking user auth:', error);
+      setLastUserCheck(now);
+    }
+  };
+
   useEffect(() => {
+    // Initial fetch of CSRF token
     fetchCsrfToken();
-    checkUserAuthentication();
-    
-    // Set up interval for checking auth status (every minute)
-    checkUserInterval.current = setInterval(checkUserAuthentication, 60 * 1000);
-    
-    return () => {
-      if (checkUserInterval.current) {
-        clearInterval(checkUserInterval.current);
-      }
-    };
-  }, []);
+    console.log('AuthRefresh component initialized');
 
-  // Setup token refresh intervals based on authentication state
-  useEffect(() => {
-    // Clear existing token refresh intervals when auth state changes
-    if (refreshInterval.current) {
-      clearInterval(refreshInterval.current);
-      refreshInterval.current = null;
-    }
-    if (csrfInterval.current) {
-      clearInterval(csrfInterval.current);
-      csrfInterval.current = null;
-    }
+    // Set up intervals for token refresh and CSRF token fetch
+    // Refresh auth token every 20 minutes
+    const tokenRefreshInterval = setInterval(refreshToken, 20 * 60 * 1000);
     
-    // Only set up token refresh for authenticated users
-    if (isAuthenticated) {
-      console.log('Setting up token refresh intervals for authenticated user');
-      
-      // Set up interval for refreshing auth token (every 10 minutes)
-      refreshInterval.current = setInterval(refreshToken, 10 * 60 * 1000);
-      
-      // Set up interval for refreshing CSRF token (every hour)
-      csrfInterval.current = setInterval(fetchCsrfToken, 60 * 60 * 1000);
-    }
-    
-    return () => {
-      if (refreshInterval.current) clearInterval(refreshInterval.current);
-      if (csrfInterval.current) clearInterval(csrfInterval.current);
-    };
-  }, [isAuthenticated]);
+    // Refresh CSRF token every 2 hours
+    const csrfRefreshInterval = setInterval(fetchCsrfToken, 2 * 60 * 60 * 1000);
 
-  // This component doesn't render anything
+    // Check user auth only if we have a user (and much less frequently)
+    let userCheckInterval: NodeJS.Timeout | null = null;
+    if (user) {
+      userCheckInterval = setInterval(checkUserAuth, 5 * 60 * 1000); // Every 5 minutes
+      console.log('Set up user check interval for authenticated user');
+    }
+
+    return () => {
+      clearInterval(tokenRefreshInterval);
+      clearInterval(csrfRefreshInterval);
+      if (userCheckInterval) clearInterval(userCheckInterval);
+      console.log('AuthRefresh component cleanup');
+    };
+  }, [user]);
+
+  // This component doesn't render anything visible
   return null;
-};
-
-export default AuthRefresh; 
+}
+ 

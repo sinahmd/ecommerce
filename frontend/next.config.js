@@ -8,7 +8,14 @@ const nextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async rewrites() {
     return [
@@ -41,4 +48,5 @@ const nextConfig = {
   },
 };
 
+module.exports = nextConfig;
 module.exports = nextConfig; 

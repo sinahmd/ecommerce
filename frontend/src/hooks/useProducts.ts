@@ -2,7 +2,7 @@ import { useApi } from "./useApi";
 import { endpoints } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { Product } from "@/types/product";
-import api from "@/lib/api";
+import { UseApiOptions } from "./useApi";
 
 export interface Category {
   id: number;
@@ -28,58 +28,68 @@ interface UseProductsResult {
   currentPage: number;
 }
 
-export function useProducts(params: UseProductsParams = {}): UseProductsResult {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+// Define interface for API responses
+interface ProductListResponse {
+  products?: Product[];
+  total_pages?: number;
+  current_page?: number;
+}
+
+interface CategoryProductsResponse {
+  category?: Category;
+  products?: Product[];
+}
+
+export function useProducts(
+  params: UseProductsParams = {},
+  options: UseApiOptions = {}
+): UseProductsResult {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(params.page || 1);
 
+  // Prepare query parameters
+  const queryParams: Record<string, string> = {};
+  if (params.search) queryParams.search = params.search;
+  if (params.sortBy) queryParams.sort_by = params.sortBy;
+  if (params.minPrice) queryParams.min_price = params.minPrice.toString();
+  if (params.maxPrice) queryParams.max_price = params.maxPrice.toString();
+  if (params.page) queryParams.page = params.page.toString();
+  if (params.limit) queryParams.limit = params.limit.toString();
+
+  // Use the useApi hook with proper type
+  const { data, isLoading, error } = useApi<ProductListResponse | Product[]>(
+    endpoints.products.list().url,
+    {
+      immediate: true,
+      ...options
+    }
+  );
+
+  // Add debug logging
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
+    if (data) {
+      console.log("useProducts API response:", data);
+    }
+  }, [data]);
 
-        if (params.search) queryParams.append("search", params.search);
-        if (params.sortBy) queryParams.append("sort_by", params.sortBy);
-        if (params.minPrice)
-          queryParams.append("min_price", params.minPrice.toString());
-        if (params.maxPrice)
-          queryParams.append("max_price", params.maxPrice.toString());
-        if (params.page) queryParams.append("page", params.page.toString());
-        if (params.limit) queryParams.append("limit", params.limit.toString());
+  // Extract and normalize products from the response data
+  const products = Array.isArray(data) ? data : data?.products || [];
 
-        const response = await api.get(endpoints.products.list().url, {
-          params: queryParams
-        });
-        console.log("Raw API response:", response.data);
+  // Update pagination information when data changes
+  useEffect(() => {
+    if (data && !Array.isArray(data)) {
+      setTotalPages(data.total_pages || 1);
+      setCurrentPage(data.current_page || 1);
+    }
+  }, [data]);
 
-        const { products, total_pages, current_page } = response.data;
-
-        setProducts(products);
-        setTotalPages(total_pages);
-        setCurrentPage(current_page);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to fetch products")
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [
-    params.search,
-    params.sortBy,
-    params.minPrice,
-    params.maxPrice,
-    params.page,
-    params.limit
-  ]);
-
-  return { products, isLoading, error, totalPages, currentPage };
+  return {
+    products,
+    isLoading,
+    error: error as Error | null,
+    totalPages,
+    currentPage
+  };
 }
 
 export function useProduct(id: number, options = {}) {
@@ -111,16 +121,37 @@ export function useCategories(options = {}) {
 }
 
 export function useCategoryProducts(slug: string, options = {}) {
-  const { data, isLoading, error, fetchData } = useApi<{
-    category: Category;
-    products: Product[];
-  }>(slug ? endpoints.products.category(slug).url : "", {
+  // Use a default list endpoint if no slug is provided
+  const apiUrl = slug
+    ? endpoints.products.category(slug).url
+    : endpoints.products.list().url;
+
+  const { data, isLoading, error, fetchData } = useApi<
+    CategoryProductsResponse | Product[] | Product
+  >(apiUrl, {
     ...options,
-    skip: !slug
+    // Don't skip the request even if slug is empty - it will fetch all products
+    skip: false
   });
 
+  // Add debug logging
+  useEffect(() => {
+    if (data) {
+      console.log("useCategoryProducts API response for slug:", slug, data);
+    }
+  }, [data, slug]);
+
+  // Extract and normalize products from the response data
+  const products = Array.isArray(data)
+    ? data
+    : data && "products" in data && data.products
+    ? data.products
+    : data
+    ? [data as Product]
+    : [];
+
   return {
-    products: data?.products || [],
+    products,
     isLoading,
     error,
     fetchCategoryProducts: fetchData

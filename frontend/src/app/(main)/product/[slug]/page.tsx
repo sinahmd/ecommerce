@@ -96,6 +96,30 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
     }
   };
 
+  // Extract category info with consistent fallback logic
+  const getCategoryInfo = () => {
+    if (!product) return { name: '', slug: '' };
+    
+    console.log('Product category data:', {
+      primary_category: product.primary_category,
+      category: product.category,
+      category_names: product.category_names,
+      category_slugs: product.category_slugs
+    });
+    
+    const name = product.primary_category?.name || 
+                (product.category_names && product.category_names[0]) || 
+                (product.category?.name) || 
+                '';
+                
+    const slug = product.primary_category?.slug || 
+                (product.category_slugs && product.category_slugs[0]) || 
+                (product.category?.slug) || 
+                '';
+                
+    return { name, slug };
+  };
+
   if (isLoading) {
     return (
       <div className="container py-12">
@@ -174,12 +198,16 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
           <div>
             <h1 className="text-3xl font-bold">{product.name}</h1>
             <div className="flex items-center mt-2">
-              <Link 
-                href={`/category/${product.category.slug}`}
-                className="text-muted-foreground hover:underline"
-              >
-                {product.category.name}
-              </Link>
+              {getCategoryInfo().name ? (
+                <Link 
+                  href={`/category/${getCategoryInfo().slug}`}
+                  className="text-muted-foreground hover:underline"
+                >
+                  {getCategoryInfo().name}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">Uncategorized</span>
+              )}
             </div>
           </div>
 

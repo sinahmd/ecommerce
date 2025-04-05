@@ -5,7 +5,21 @@ export interface Product {
   description: string;
   price: number;
   image: string;
-  category: {
+  // Legacy category field - kept for backward compatibility
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  // New fields for multiple categories
+  categories?: {
+    id: number;
+    name: string;
+    slug: string;
+  }[];
+  category_names?: string[];
+  category_slugs?: string[];
+  primary_category?: {
     id: number;
     name: string;
     slug: string;

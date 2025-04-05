@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { Toaster } from "@/components/ui/toaster";
-import AuthRefresh from '@/components/AuthRefresh';
+import { AuthRefresh } from "@/components/AuthRefresh";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +21,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <AuthRefresh />
           {children}
           <Toaster />
+          <AuthRefresh />
         </Providers>
       </body>
     </html>
   );
 }
+
+

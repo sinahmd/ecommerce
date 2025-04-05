@@ -196,21 +196,16 @@ class ZarinPalPaymentView(APIView):
             data = response_data.get("data", {})
             
             # Check for success code either in root or inside data object
-            root_code = response_data.get("code")
-            data_code = None
-            if isinstance(data, dict):
-                data_code = data.get("code")
-            
-            success_code = root_code if root_code is not None else data_code
-            print(f"Payment initiation code: {success_code}")
+            success_code = response_data.get("code")
+            if success_code is None and isinstance(data, dict):
+                success_code = data.get("code")
             
             # Check if authority exists in data
             authority = None
             if isinstance(data, dict):
                 authority = data.get("authority")
             
-            # According to ZarinPal docs, code 100 indicates success
-            if success_code == 100 and authority:
+            if (success_code == 100 or data.get("code") == 100) and authority:
                 # Update order with authority
                 order.authority = authority
                 order.save()

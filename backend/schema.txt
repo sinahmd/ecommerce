@@ -1,0 +1,280 @@
+# This is an auto-generated Django model module.
+# You'll have to do the following manually to clean this up:
+#   * Rearrange models' order
+#   * Make sure each model has one field with primary_key=True
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+# Feel free to rename the models, but don't rename db_table values or field names.
+from django.db import models
+
+
+class AdminPanelAdminactivity(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    action = models.CharField(max_length=100)
+    details = models.TextField()
+    ip_address = models.GenericIPAddressField()
+    created_at = models.DateTimeField()
+    user = models.ForeignKey('UsersCustomuser', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'admin_panel_adminactivity'
+
+
+class AdminPanelDashboardsetting(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=100)
+    value = models.TextField()
+    description = models.TextField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'admin_panel_dashboardsetting'
+
+
+class AuthGroup(models.Model):
+    name = models.CharField(unique=True, max_length=150)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_group'
+
+
+class AuthGroupPermissions(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
+    permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_group_permissions'
+        unique_together = (('group', 'permission'),)
+
+
+class AuthPermission(models.Model):
+    name = models.CharField(max_length=255)
+    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
+    codename = models.CharField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_permission'
+        unique_together = (('content_type', 'codename'),)
+
+
+class CheckoutOrder(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.CharField(max_length=254)
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+    status = models.CharField(max_length=20)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    user = models.ForeignKey('UsersCustomuser', models.DO_NOTHING)
+    payment_status = models.CharField(max_length=20)
+    authority = models.CharField(max_length=255, blank=True, null=True)
+    ref_id = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'checkout_order'
+
+
+class CheckoutOrderitem(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    order = models.ForeignKey(CheckoutOrder, models.DO_NOTHING)
+    product = models.ForeignKey('StoreProduct', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'checkout_orderitem'
+
+
+class CheckoutTransaction(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    authority = models.CharField(max_length=255, blank=True, null=True)
+    ref_id = models.CharField(max_length=255, blank=True, null=True)
+    card_pan = models.CharField(max_length=255, blank=True, null=True)
+    card_hash = models.CharField(max_length=255, blank=True, null=True)
+    fee_type = models.CharField(max_length=255, blank=True, null=True)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    status_code = models.IntegerField(blank=True, null=True)
+    status = models.CharField(max_length=50)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    order = models.ForeignKey(CheckoutOrder, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'checkout_transaction'
+
+
+class DjangoAdminLog(models.Model):
+    action_time = models.DateTimeField()
+    object_id = models.TextField(blank=True, null=True)
+    object_repr = models.CharField(max_length=200)
+    action_flag = models.SmallIntegerField()
+    change_message = models.TextField()
+    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey('UsersCustomuser', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'django_admin_log'
+
+
+class DjangoContentType(models.Model):
+    app_label = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'django_content_type'
+        unique_together = (('app_label', 'model'),)
+
+
+class DjangoMigrations(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    app = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    applied = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_migrations'
+
+
+class DjangoSession(models.Model):
+    session_key = models.CharField(primary_key=True, max_length=40)
+    session_data = models.TextField()
+    expire_date = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_session'
+
+
+class StoreCategory(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=100)
+    slug = models.CharField(unique=True, max_length=100)
+    description = models.TextField()
+    image = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'store_category'
+
+
+class StoreProduct(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    slug = models.CharField(unique=True, max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.CharField(max_length=100, blank=True, null=True)
+    stock = models.IntegerField()
+    available = models.BooleanField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'store_product'
+
+
+class StoreProductCategories(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    product = models.ForeignKey(StoreProduct, models.DO_NOTHING)
+    category = models.ForeignKey(StoreCategory, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'store_product_categories'
+        unique_together = (('product', 'category'),)
+
+
+class UsersAddress(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    address_type = models.CharField(max_length=20)
+    street = models.TextField()
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    zipcode = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    is_default = models.BooleanField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    user = models.ForeignKey('UsersCustomuser', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'users_address'
+
+
+class UsersCustomuser(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    password = models.CharField(max_length=128)
+    last_login = models.DateTimeField(blank=True, null=True)
+    is_superuser = models.BooleanField()
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    is_staff = models.BooleanField()
+    is_active = models.BooleanField()
+    date_joined = models.DateTimeField()
+    email = models.CharField(unique=True, max_length=254)
+    role = models.CharField(max_length=20)
+
+    class Meta:
+        managed = False
+        db_table = 'users_customuser'
+
+
+class UsersCustomuserGroups(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    customuser = models.ForeignKey(UsersCustomuser, models.DO_NOTHING)
+    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'users_customuser_groups'
+        unique_together = (('customuser', 'group'),)
+
+
+class UsersCustomuserUserPermissions(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    customuser = models.ForeignKey(UsersCustomuser, models.DO_NOTHING)
+    permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'users_customuser_user_permissions'
+        unique_together = (('customuser', 'permission'),)
+
+
+class UsersUserprofile(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    street = models.TextField(blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100)
+    zipcode = models.CharField(max_length=20, blank=True, null=True)
+    user = models.OneToOneField(UsersCustomuser, models.DO_NOTHING)
+    avatar = models.CharField(max_length=100, blank=True, null=True)
+    is_default = models.BooleanField()
+
+    class Meta:
+        managed = False
+        db_table = 'users_userprofile'

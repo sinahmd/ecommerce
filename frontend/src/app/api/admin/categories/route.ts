@@ -10,25 +10,62 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/categories/`,
-      {
-        headers: {
-          Authorization: `Bearer ${access_token.value}`
-        }
-      }
-    );
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/categories/`;
+    console.log(`Fetching categories from: ${apiUrl}`);
+
+    const response = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${access_token.value}`
+      },
+      cache: "no-store"
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch categories");
+      let errorMessage = `Error ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (parseError) {
+        console.error("Error parsing error response:", parseError);
+      }
+
+      console.error(`Failed to fetch categories: ${errorMessage}`);
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    const categories = Array.isArray(data) ? data : data.results || [];
+
+    interface CategoryResponse {
+      id: number;
+      name?: string;
+      description?: string;
+      image?: string | null;
+      product_count?: number;
+    }
+
+    const validatedCategories = categories.map(
+      (category: CategoryResponse) => ({
+        id: category.id,
+        name: category.name || "Unnamed Category",
+        description: category.description || "",
+        image: category.image || null,
+        product_count: category.product_count || 0
+      })
+    );
+
+    return NextResponse.json(validatedCategories);
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
@@ -44,6 +81,10 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
+    console.log(
+      "Creating category with data:",
+      Object.fromEntries(formData.entries())
+    );
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/categories/`,
@@ -57,8 +98,19 @@ export async function POST(request: Request) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create category");
+      let errorMessage = `Error ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = JSON.stringify(errorData) || errorMessage;
+      } catch (parseError) {
+        console.error("Error parsing error response:", parseError);
+      }
+
+      console.error(`Failed to create category: ${errorMessage}`);
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
@@ -67,7 +119,8 @@ export async function POST(request: Request) {
     console.error("Error creating category:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
+        details: error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );

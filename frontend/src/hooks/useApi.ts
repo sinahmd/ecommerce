@@ -8,7 +8,7 @@ interface ApiState<T> {
   error: Error | null;
 }
 
-interface UseApiOptions {
+export interface UseApiOptions {
   immediate?: boolean;
   skip?: boolean;
 }

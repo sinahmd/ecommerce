@@ -88,7 +88,7 @@ function SuccessPageContent() {
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="font-medium">Total Amount:</span>
-                    <span>{orderDetails.total_amount.toLocaleString()} IRR</span>
+                    <span>{orderDetails.total_amount} IRR</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="font-medium">Status:</span>

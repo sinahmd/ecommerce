@@ -15,7 +15,8 @@ from users.models import CustomUser
 from .serializers import (
     DashboardSettingSerializer, AdminActivitySerializer,
     AdminCategorySerializer, AdminProductSerializer,
-    AdminOrderSerializer, AdminUserSerializer, DashboardStatsSerializer
+    AdminOrderSerializer, AdminUserSerializer, DashboardStatsSerializer,
+    UserAdminSerializer, UserDetailAdminSerializer, AnalyticsSerializer
 )
 from django.contrib.sessions.models import Session
 
@@ -47,7 +48,7 @@ def dashboard(request):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def product_list_create(request):
     if request.method == 'GET':
-        products = Product.objects.select_related('category').all()
+        products = Product.objects.prefetch_related('categories').all()
         serializer = AdminProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
     
@@ -87,11 +88,11 @@ def product_detail(request, pk):
 def category_list_create(request):
     if request.method == 'GET':
         categories = Category.objects.all()
-        serializer = CategoryAdminSerializer(categories, many=True, context={'request': request})
+        serializer = AdminCategorySerializer(categories, many=True, context={'request': request})
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        serializer = CategoryAdminSerializer(data=request.data, context={'request': request})
+        serializer = AdminCategorySerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -106,11 +107,11 @@ def category_detail(request, pk):
         return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = CategoryAdminSerializer(category, context={'request': request})
+        serializer = AdminCategorySerializer(category, context={'request': request})
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        serializer = CategoryAdminSerializer(category, data=request.data, partial=True, context={'request': request})
+        serializer = AdminCategorySerializer(category, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

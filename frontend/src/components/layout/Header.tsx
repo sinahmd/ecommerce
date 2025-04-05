@@ -97,15 +97,15 @@ export default function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push('/profile')}>
-                  My Profile
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">My Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/orders')}>
-                  My Orders
+                <DropdownMenuItem asChild>
+                  <Link href="/orders">My Orders</Link>
                 </DropdownMenuItem>
                 {user.role === 'admin' && (
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    Admin Dashboard
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleLogout}>
@@ -166,6 +166,12 @@ export default function Header() {
                         className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
                         My Profile
+                      </Link>
+                      <Link 
+                        href="/orders" 
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        My Orders
                       </Link>
                       {user.role === 'admin' && (
                         <Link 

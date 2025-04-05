@@ -54,4 +54,5 @@ def auth_cookie_middleware(get_response):
         
         return response
     
+    return middleware
     return middleware 

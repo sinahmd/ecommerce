@@ -11,8 +11,8 @@ import { AxiosError } from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthContext();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, user } = useAuthContext();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,44 +20,24 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    
     try {
-      console.log("Attempting login...");
+      setIsSubmitting(true);
+      
+      // Use the auth hook's login function which now uses HTTP-only cookies
       const success = await login(formData.email, formData.password);
-      console.log("Login success:", success);
-
+      
       if (success) {
         toast({
           title: "Success",
           description: "You have been logged in successfully.",
         });
 
-        // Get user from localStorage to check their role
-        const userStr = localStorage.getItem("user");
-        console.log("User from localStorage:", userStr);
-
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          console.log("Parsed user:", user);
-          console.log("User role:", user.role);
-
-          // Redirect admin users to admin dashboard, others to home
-          if (user.role === "admin") {
-            console.log("Redirecting to /admin...");
-            router.push("/admin");
-            // Force a hard navigation if router.push doesn't work
-            window.location.href = "/admin";
-          } else {
-            console.log("Redirecting to /...");
-            router.push("/");
-            // Force a hard navigation if router.push doesn't work
-            window.location.href = "/";
-          }
+        // Redirect based on user role
+        if (user && user.role === "admin") {
+          router.push("/admin");
         } else {
-          console.log("No user in localStorage, redirecting to /...");
           router.push("/");
-          window.location.href = "/";
         }
       }
     } catch (error) {
@@ -83,7 +63,7 @@ export default function LoginPage() {
         });
       }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -119,8 +99,9 @@ export default function LoginPage() {
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
+                  autoComplete="username"
                 />
               </div>
 
@@ -141,13 +122,14 @@ export default function LoginPage() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
+                  autoComplete="current-password"
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </form>
 
@@ -162,4 +144,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

@@ -1,11 +1,10 @@
 "use client";
 
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 import { useEffect, useState } from 'react';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 
-export default function AdminLayout({
+export default function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -16,14 +15,14 @@ export default function AdminLayout({
   const [redirected, setRedirected] = useState(false);
 
   useEffect(() => {
-    // Only redirect if we have finished loading and user is not admin
+    // Only redirect if we have finished loading and user is not authenticated
     if (!isLoading) {
-      if (user?.role === 'admin') {
+      if (user) {
         setAuthorized(true);
       } else if (!redirected) {
         // Only redirect once to prevent loops
         setRedirected(true);
-        console.log("User not authorized for admin, redirecting to login");
+        console.log("User not authenticated for profile, redirecting to login");
         
         // Short delay to ensure redirect happens after state update
         setTimeout(() => {
@@ -43,11 +42,9 @@ export default function AdminLayout({
   }
   
   return (
-    <div className="flex h-screen bg-gray-100">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        {children}
-      </main>
+    <div className="bg-gray-50 min-h-screen">
+      {children}
     </div>
   );
-} 
+}
+ 

@@ -37,6 +37,7 @@ export function useAuth() {
   // Use refs instead of localStorage to track auth checking state
   const isCheckingAuthRef = useRef(false);
   const lastCheckTimeRef = useRef(0);
+  const authCheckedRef = useRef(false);
 
   const setUser = useCallback((user: User | null) => {
     setState((prev) => ({
@@ -57,17 +58,23 @@ export function useAuth() {
   // Check if user is already authenticated on mount
   useEffect(() => {
     const loadUser = async () => {
+      // Don't check again if we've already completed a check
+      if (authCheckedRef.current) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
 
         // Use refs instead of localStorage for tracking state
         const currentTime = Date.now();
 
-        // If we've checked auth in the last 10 seconds, don't check again
+        // If we've checked auth in the last 30 seconds, don't check again
         // This prevents rapid successive auth checks causing the redirect loop
         if (
           isCheckingAuthRef.current ||
-          (currentTime - lastCheckTimeRef.current < 10000 &&
+          (currentTime - lastCheckTimeRef.current < 30000 &&
             lastCheckTimeRef.current > 0)
         ) {
           console.log(
@@ -87,13 +94,13 @@ export function useAuth() {
 
           if (response.data) {
             // Use user data from server
+            console.log("User authenticated:", response.data);
             setUser(response.data);
           } else {
+            console.log("No user data returned");
             setUser(null);
           }
         } catch (error: unknown) {
-          console.error("Error loading user:", error);
-
           // If it's a 401 unauthorized, just set user to null without redirecting
           // This is a normal case for guest users
           if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -107,6 +114,7 @@ export function useAuth() {
         } finally {
           // Clear checking flag
           isCheckingAuthRef.current = false;
+          authCheckedRef.current = true;
         }
       } finally {
         setLoading(false);
@@ -132,10 +140,9 @@ export function useAuth() {
 
         if (response.data.user) {
           setUser(response.data.user);
-
-          // We don't need to manually store the tokens anymore
-          // as they are now stored in HTTP-only cookies by the server
-
+          authCheckedRef.current = true;
+          // Reset the last check time to force a fresh auth check if needed
+          lastCheckTimeRef.current = 0;
           return true;
         } else {
           setError("Invalid response from server");
@@ -173,6 +180,7 @@ export function useAuth() {
         // If registration also logs the user in and returns user data
         if (response.data.user) {
           setUser(response.data.user);
+          authCheckedRef.current = true;
         }
 
         return true;
@@ -198,6 +206,7 @@ export function useAuth() {
     } finally {
       // Clear user state
       setUser(null);
+      authCheckedRef.current = true;
       router.push("/");
     }
   }, [router, setUser]);

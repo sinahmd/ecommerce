@@ -27,6 +27,8 @@ class AdminActivitySerializer(serializers.ModelSerializer):
 
 class AdminCategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False)
+    slug = serializers.SlugField(required=False)
     
     class Meta:
         model = Category
@@ -34,10 +36,20 @@ class AdminCategorySerializer(serializers.ModelSerializer):
     
     def get_product_count(self, obj):
         return obj.products.count()
+        
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Name is required")
+        return value
+
+    def create(self, validated_data):
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
 
 class AdminProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category.name')
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    category_names = serializers.SerializerMethodField()
+    categories = serializers.PrimaryKeyRelatedField(many=True, queryset=Category.objects.all())
     image = serializers.ImageField(required=False)
     slug = serializers.SlugField(required=False)
     
@@ -45,9 +57,12 @@ class AdminProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'price', 'image', 
-            'stock', 'available', 'category', 'category_name',
+            'stock', 'available', 'categories', 'category_names',
             'created_at', 'updated_at'
         ]
+
+    def get_category_names(self, obj):
+        return [category.name for category in obj.categories.all()]
 
     def validate_name(self, value):
         if not value:
@@ -65,9 +80,25 @@ class AdminProductSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        categories = validated_data.pop('categories', [])
         if 'slug' not in validated_data:
             validated_data['slug'] = slugify(validated_data['name'])
-        return super().create(validated_data)
+        
+        product = Product.objects.create(**validated_data)
+        product.categories.set(categories)
+        return product
+        
+    def update(self, instance, validated_data):
+        categories = validated_data.pop('categories', None)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        if categories is not None:
+            instance.categories.set(categories)
+            
+        instance.save()
+        return instance
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
@@ -91,28 +122,6 @@ class DashboardStatsSerializer(serializers.Serializer):
     total_products = serializers.IntegerField()
     total_users = serializers.IntegerField()
     recent_orders = AdminOrderSerializer(many=True)
-
-class CategoryAdminSerializer(serializers.ModelSerializer):
-    product_count = serializers.SerializerMethodField()
-    image = serializers.ImageField(required=False)
-    slug = serializers.SlugField(required=False)
-
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'description', 'image', 'product_count']
-
-    def get_product_count(self, obj):
-        return obj.products.count()
-
-    def validate_name(self, value):
-        if not value:
-            raise serializers.ValidationError("Name is required")
-        return value
-
-    def create(self, validated_data):
-        if 'slug' not in validated_data:
-            validated_data['slug'] = slugify(validated_data['name'])
-        return super().create(validated_data)
 
 class UserAdminSerializer(serializers.ModelSerializer):
     orders_count = serializers.SerializerMethodField()

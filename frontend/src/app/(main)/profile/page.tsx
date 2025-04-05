@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const { addresses, isLoading: addressesLoading, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddresses();
   const { orders, isLoading: ordersLoading } = useOrders();
   const router = useRouter();
-  
+
   // Profile state
   const [profileForm, setProfileForm] = useState({
     first_name: '',
@@ -34,7 +34,7 @@ export default function ProfilePage() {
     username: '',
     phone: '',
   });
-  
+
   // Address dialog state
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
@@ -47,25 +47,25 @@ export default function ProfilePage() {
     country: 'USA',
     is_default: false
   });
-  
+
   // Security state
   const [securityForm, setSecurityForm] = useState({
     current_password: '',
     new_password: '',
     confirm_password: ''
   });
-  
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAddressUpdating, setIsAddressUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
-  
+
   // Notification preferences
   const [notifications, setNotifications] = useState({
     email_offers: true,
     order_updates: true,
     newsletter: false
   });
-  
+
   // Set form values when user data is available
   useEffect(() => {
     if (user) {
@@ -78,7 +78,7 @@ export default function ProfilePage() {
       });
     }
   }, [user]);
-  
+
   const resetAddressForm = () => {
     setAddressForm({
       address_type: 'shipping' as 'shipping' | 'billing',
@@ -91,7 +91,7 @@ export default function ProfilePage() {
     });
     setCurrentAddress(null);
   };
-  
+
   const openAddressDialog = (address?: Address) => {
     if (address) {
       setCurrentAddress(address);
@@ -109,11 +109,11 @@ export default function ProfilePage() {
     }
     setAddressDialogOpen(true);
   };
-  
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
-    
+
     try {
       // Make the API call to update the profile
       await api.put(endpoints.user.profile, {
@@ -121,7 +121,7 @@ export default function ProfilePage() {
         last_name: profileForm.last_name,
         phone: profileForm.phone
       });
-      
+
       // Update email if changed
       if (user?.email !== profileForm.email) {
         // This would typically require a separate API call and email verification
@@ -129,34 +129,34 @@ export default function ProfilePage() {
         // In a real app, you might implement this as:
         // await api.post(endpoints.user.emailChange, { email: profileForm.email });
       }
-      
+
       toast({
         title: "Success",
         description: "Your profile has been updated successfully.",
       });
     } catch (error) {
-      const axiosError = error as AxiosError<{detail?: string}>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       let errorMessage = "Failed to update profile. Please try again.";
-      
+
       if (axiosError.response?.data?.detail) {
         errorMessage = axiosError.response.data.detail;
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
-      
+
       console.error('Profile update error:', error);
     } finally {
       setIsUpdating(false);
     }
   };
-  
+
   const handleAddressSave = async () => {
     setIsAddressUpdating(true);
-    
+
     try {
       if (currentAddress) {
         // Update existing address
@@ -175,7 +175,7 @@ export default function ProfilePage() {
       }
       setAddressDialogOpen(false);
       resetAddressForm();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast({
         title: "Error",
@@ -186,7 +186,7 @@ export default function ProfilePage() {
       setIsAddressUpdating(false);
     }
   };
-  
+
   const handleAddressDelete = async (addressId: number) => {
     if (confirm("Are you sure you want to delete this address?")) {
       try {
@@ -195,7 +195,7 @@ export default function ProfilePage() {
           title: "Success",
           description: "Address deleted successfully.",
         });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         toast({
           title: "Error",
@@ -205,7 +205,7 @@ export default function ProfilePage() {
       }
     }
   };
-  
+
   const handleSetDefaultAddress = async (addressId: number) => {
     try {
       await setDefaultAddress(addressId);
@@ -213,7 +213,7 @@ export default function ProfilePage() {
         title: "Success",
         description: "Default address updated successfully.",
       });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast({
         title: "Error",
@@ -222,10 +222,10 @@ export default function ProfilePage() {
       });
     }
   };
-  
+
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (securityForm.new_password !== securityForm.confirm_password) {
       toast({
         title: "Error",
@@ -234,33 +234,33 @@ export default function ProfilePage() {
       });
       return;
     }
-    
+
     setIsPasswordUpdating(true);
-    
+
     try {
       await api.put(endpoints.user.password, {
         current_password: securityForm.current_password,
         new_password: securityForm.new_password
       });
-      
+
       setSecurityForm({
         current_password: '',
         new_password: '',
         confirm_password: ''
       });
-      
+
       toast({
         title: "Success",
         description: "Your password has been updated successfully.",
       });
     } catch (error) {
-      const axiosError = error as AxiosError<{detail?: string}>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       let errorMessage = "Failed to update password. Please try again.";
-      
+
       if (axiosError.response?.data?.detail) {
         errorMessage = axiosError.response.data.detail;
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -270,7 +270,7 @@ export default function ProfilePage() {
       setIsPasswordUpdating(false);
     }
   };
-  
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -279,20 +279,20 @@ export default function ProfilePage() {
       console.error('Logout error:', error);
     }
   };
-  
+
   const handleNotificationChange = (key: keyof typeof notifications) => {
     setNotifications(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
-    
+
     // In a real app, you would save these preferences to the API
     toast({
       title: "Success",
       description: "Notification preferences updated.",
     });
   };
-  
+
   // If auth is loading, show a loading state
   if (authLoading) {
     return (
@@ -301,28 +301,37 @@ export default function ProfilePage() {
       </div>
     );
   }
-  
-  // If no user is found, redirect to login
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
-  
+
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending': return 'bg-yellow-500';
-      case 'processing': return 'bg-blue-500';
-      case 'shipped': return 'bg-indigo-500';
-      case 'delivered': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
+      case 'processing': return 'bg-blue-600';
+      case 'shipped': return 'bg-indigo-600';
+      case 'delivered': return 'bg-green-600';
+      case 'cancelled': return 'bg-red-600';
+      case 'failed': return 'bg-red-500';
+      case 'refunded': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
   };
-  
+
+  const getStatusDescription = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'Awaiting Payment';
+      case 'processing': return 'Payment Confirmed, Processing Order';
+      case 'shipped': return 'Order Shipped';
+      case 'delivered': return 'Order Delivered';
+      case 'cancelled': return 'Order Cancelled';
+      case 'failed': return 'Payment Failed';
+      case 'refunded': return 'Order Refunded';
+      default: return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
   return (
     <div className="container my-8">
       <h1 className="text-3xl font-bold mb-8">My Account</h1>
-      
+
       <Tabs defaultValue="personal" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="personal" className="flex items-center">
@@ -342,7 +351,7 @@ export default function ProfilePage() {
             Orders
           </TabsTrigger>
         </TabsList>
-        
+
         {/* Personal Info Tab */}
         <TabsContent value="personal">
           <Card>
@@ -355,58 +364,58 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
                     <Label htmlFor="first_name">First Name</Label>
-                    <Input 
-                      id="first_name" 
+                    <Input
+                      id="first_name"
                       value={profileForm.first_name}
-                      onChange={(e) => setProfileForm({...profileForm, first_name: e.target.value})}
+                      onChange={(e) => setProfileForm({ ...profileForm, first_name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="last_name">Last Name</Label>
-                    <Input 
-                      id="last_name" 
+                    <Input
+                      id="last_name"
                       value={profileForm.last_name}
-                      onChange={(e) => setProfileForm({...profileForm, last_name: e.target.value})}
+                      onChange={(e) => setProfileForm({ ...profileForm, last_name: e.target.value })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 mb-4">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
+                  <Input
+                    id="email"
                     type="email"
                     value={profileForm.email}
-                    onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                     disabled
                   />
                   <p className="text-xs text-muted-foreground">Email address cannot be changed directly for security reasons.</p>
                 </div>
-                
+
                 <div className="space-y-2 mb-4">
                   <Label htmlFor="username">Username</Label>
-                  <Input 
-                    id="username" 
+                  <Input
+                    id="username"
                     value={profileForm.username}
                     disabled
                   />
                 </div>
-                
+
                 <div className="space-y-2 mb-4">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
+                  <Input
+                    id="phone"
                     value={profileForm.phone}
-                    onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                   />
                 </div>
-                
+
                 <Button type="submit" disabled={isUpdating}>
                   {isUpdating ? 'Saving...' : 'Save Changes'}
                 </Button>
               </form>
             </CardContent>
-            
+
             <CardHeader>
               <CardTitle>Notification Preferences</CardTitle>
               <CardDescription>Manage how we communicate with you.</CardDescription>
@@ -417,31 +426,31 @@ export default function ProfilePage() {
                   <Label htmlFor="email_offers" className="font-normal">Marketing Emails</Label>
                   <p className="text-sm text-muted-foreground">Receive emails about new products and sales</p>
                 </div>
-                <Switch 
+                <Switch
                   id="email_offers"
                   checked={notifications.email_offers}
                   onCheckedChange={() => handleNotificationChange('email_offers')}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="order_updates" className="font-normal">Order Updates</Label>
                   <p className="text-sm text-muted-foreground">Receive email notifications about your orders</p>
                 </div>
-                <Switch 
+                <Switch
                   id="order_updates"
                   checked={notifications.order_updates}
                   onCheckedChange={() => handleNotificationChange('order_updates')}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="newsletter" className="font-normal">Newsletter</Label>
                   <p className="text-sm text-muted-foreground">Receive our weekly newsletter with industry news</p>
                 </div>
-                <Switch 
+                <Switch
                   id="newsletter"
                   checked={notifications.newsletter}
                   onCheckedChange={() => handleNotificationChange('newsletter')}
@@ -450,7 +459,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Addresses Tab */}
         <TabsContent value="addresses">
           <Card>
@@ -503,7 +512,7 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
-          
+
           <Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -512,13 +521,13 @@ export default function ProfilePage() {
                   {currentAddress ? 'Update your address details below.' : 'Enter your address details below.'}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="address_type">Address Type</Label>
-                  <Select 
-                    value={addressForm.address_type} 
-                    onValueChange={(value: 'shipping' | 'billing') => setAddressForm({...addressForm, address_type: value})}
+                  <Select
+                    value={addressForm.address_type}
+                    onValueChange={(value: 'shipping' | 'billing') => setAddressForm({ ...addressForm, address_type: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select address type" />
@@ -529,66 +538,66 @@ export default function ProfilePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="street">Street Address</Label>
-                  <Textarea 
+                  <Textarea
                     id="street"
                     value={addressForm.street}
-                    onChange={(e) => setAddressForm({...addressForm, street: e.target.value})}
+                    onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">City</Label>
-                    <Input 
+                    <Input
                       id="city"
                       value={addressForm.city}
-                      onChange={(e) => setAddressForm({...addressForm, city: e.target.value})}
+                      onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">State/Province</Label>
-                    <Input 
+                    <Input
                       id="state"
                       value={addressForm.state}
-                      onChange={(e) => setAddressForm({...addressForm, state: e.target.value})}
+                      onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="zipcode">ZIP/Postal Code</Label>
-                    <Input 
+                    <Input
                       id="zipcode"
                       value={addressForm.zipcode}
-                      onChange={(e) => setAddressForm({...addressForm, zipcode: e.target.value})}
+                      onChange={(e) => setAddressForm({ ...addressForm, zipcode: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Input 
+                    <Input
                       id="country"
                       value={addressForm.country}
-                      onChange={(e) => setAddressForm({...addressForm, country: e.target.value})}
+                      onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id="is_default"
                     checked={addressForm.is_default}
-                    onChange={(e) => setAddressForm({...addressForm, is_default: e.target.checked})}
+                    onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <Label htmlFor="is_default" className="font-normal">Set as default address for {addressForm.address_type}</Label>
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddressDialogOpen(false)}>
                   Cancel
@@ -600,7 +609,7 @@ export default function ProfilePage() {
             </DialogContent>
           </Dialog>
         </TabsContent>
-        
+
         {/* Security Tab */}
         <TabsContent value="security">
           <Card>
@@ -612,37 +621,37 @@ export default function ProfilePage() {
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="current_password">Current Password</Label>
-                  <Input 
-                    id="current_password" 
+                  <Input
+                    id="current_password"
                     type="password"
                     value={securityForm.current_password}
-                    onChange={(e) => setSecurityForm({...securityForm, current_password: e.target.value})}
+                    onChange={(e) => setSecurityForm({ ...securityForm, current_password: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="new_password">New Password</Label>
-                  <Input 
-                    id="new_password" 
+                  <Input
+                    id="new_password"
                     type="password"
                     value={securityForm.new_password}
-                    onChange={(e) => setSecurityForm({...securityForm, new_password: e.target.value})}
+                    onChange={(e) => setSecurityForm({ ...securityForm, new_password: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="confirm_password">Confirm New Password</Label>
-                  <Input 
-                    id="confirm_password" 
+                  <Input
+                    id="confirm_password"
                     type="password"
                     value={securityForm.confirm_password}
-                    onChange={(e) => setSecurityForm({...securityForm, confirm_password: e.target.value})}
+                    onChange={(e) => setSecurityForm({ ...securityForm, confirm_password: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <Button type="submit" disabled={isPasswordUpdating}>
                   {isPasswordUpdating ? 'Updating...' : 'Update Password'}
                 </Button>
@@ -650,7 +659,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Orders Tab */}
         <TabsContent value="orders">
           <Card>
@@ -678,32 +687,71 @@ export default function ProfilePage() {
                             Placed on {new Date(order.created_at).toLocaleDateString()}
                           </p>
                         </div>
-                        <Badge 
+                        <Badge
                           className={getStatusBadgeColor(order.status)}
                         >
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          {getStatusDescription(order.status)}
                         </Badge>
                       </div>
-                      
+
                       <div className="space-y-2">
-                        {order.items.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center py-2 border-b last:border-0">
+                        {order.items?.map((item) => (
+                          <div key={item.id || `item-${Math.random()}`} className="flex justify-between items-center py-2 border-b last:border-0">
                             <div className="flex items-center">
-                              <span className="font-medium">{item.quantity}x</span>
-                              <span className="ml-2">{item.product.name}</span>
+                              <span className="font-medium">{item.quantity || 1}x</span>
+                              <span className="ml-2">
+                                {item.product?.name || 'Product'}
+                              </span>
                             </div>
-                            <span>${item.price.toFixed(2)}</span>
+                            <span>${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}</span>
                           </div>
                         ))}
                       </div>
-                      
+
+                      {/* Payment Transactions */}
+                      {order.transactions && order.transactions.length > 0 && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="font-medium mb-2">Payment Information</h4>
+                          {order.transactions.map((transaction) => (
+                            <div key={transaction.id || `trans-${Math.random()}`} className="text-sm">
+                              <div className="flex justify-between">
+                                <span>Transaction ID:</span>
+                                <span>{transaction.ref_id || (transaction.authority ? transaction.authority.slice(0, 10) + '...' : 'N/A')}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Status:</span>
+                                <span className={transaction.status === 'paid' ? 'text-green-600' : 'text-amber-600'}>
+                                  {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'Unknown'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Date:</span>
+                                <span>{transaction.created_at ? new Date(transaction.created_at).toLocaleString() : 'N/A'}</span>
+                              </div>
+                              {transaction.card_pan && (
+                                <div className="flex justify-between">
+                                  <span>Card:</span>
+                                  <span>{transaction.card_pan}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="mt-4 pt-4 border-t flex justify-between">
                         <span>Total</span>
-                        <span className="font-medium">${order.total_price.toFixed(2)}</span>
+                        <span className="font-medium">${typeof order.total_price === 'number' ? order.total_price.toFixed(2) : order.total_price || '0.00'}</span>
                       </div>
-                      
+
                       <div className="mt-4 flex justify-end">
-                        <Button variant="outline" size="sm">View Order Details</Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/orders/${order.id}`)}
+                        >
+                          View Full Details
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -713,7 +761,7 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
-      
+
       <div className="mt-8 text-center">
         <Button variant="outline" onClick={handleLogout} className="flex items-center mx-auto">
           <LogOut className="mr-2 h-4 w-4" />

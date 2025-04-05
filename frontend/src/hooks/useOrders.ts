@@ -4,14 +4,30 @@ import { useAuth } from "./useAuth";
 
 export interface OrderItem {
   id: number;
-  product: {
+  product?: {
     id: number;
     name: string;
     image: string;
   };
+  product_name?: string;
   price: number;
   quantity: number;
   total_price: number;
+}
+
+export interface Transaction {
+  id: number;
+  amount: number;
+  authority: string;
+  ref_id: string | null;
+  card_pan: string | null;
+  card_hash: string | null;
+  fee_type: string | null;
+  fee: number | null;
+  status_code: number | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Order {
@@ -22,6 +38,12 @@ export interface Order {
   created_at: string;
   updated_at: string;
   items: OrderItem[];
+  transactions: Transaction[];
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  address: string;
 }
 
 export function useOrders() {
