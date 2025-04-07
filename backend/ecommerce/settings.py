@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'checkout',
     'admin_panel',
     'dashboard',
+    'blog',  # Add our new blog app
 ]
 
 MIDDLEWARE = [

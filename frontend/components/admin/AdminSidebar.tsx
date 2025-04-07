@@ -11,12 +11,14 @@ import {
   ChartBarIcon,
   TagIcon,
   CogIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
   { name: 'Categories', href: '/admin/categories', icon: TagIcon },
+  { name: 'Blog', href: '/admin/blog', icon: DocumentTextIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
   { name: 'Settings', href: '/admin/settings', icon: CogIcon },
@@ -42,7 +44,7 @@ export default function AdminSidebar() {
       </div>
       <nav className="mt-5 px-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}

@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/checkout/', include('checkout.urls')),
     path('api/admin-panel/', include('admin_panel.urls')),
     path('api/dashboard/', include('dashboard.urls')),
+    path('api/blog/', include('blog.urls')),
     
     # Authentication endpoints
     path('api/auth/', include('users.auth_urls')),
