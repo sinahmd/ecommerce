@@ -1,95 +1,210 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingCart, Menu, Search, User, UserCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { usePathname, useRouter } from 'next/navigation';
+import { SearchBox } from '@/components/ui/search-box';
 import { useCartContext } from '@/providers/CartProvider';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Menu, ChevronDown, UserCircle } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCategories } from '@/hooks/useProducts';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/providers/AuthProvider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import { useEffect, useState } from 'react';
 
-export default function Header() {
-  const { cart } = useCartContext();
-  const { categories } = useCategories();
-  const [searchQuery, setSearchQuery] = useState('');
+export function Header() {
   const router = useRouter();
-  const { user, logout } = useAuthContext();
-  const totalItems = cart?.reduce((total, item) => total + item.quantity, 0) || 0;
+  const pathname = usePathname();
+  const { cartItemsCount } = useCartContext();
+  const { user, logout } = useAuth();
+  const { categories, isLoading: categoriesLoading } = useCategories({ immediate: true });
+  const [mounted, setMounted] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
+  // Handle client-side hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isActive = (path: string) => {
+    if (!mounted) return false;
+    return pathname === path;
+  };
+
+  const isCategoryActive = (categorySlug: string) => {
+    if (!mounted) return false;
+    return pathname === `/category/${categorySlug}`;
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/');
+      router.push('/products');
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
+  const mainNavigation = [
+    { name: 'Home', href: '/' },
+    { name: 'Products', href: '/products' },
+    { name: 'Blog', href: '/blog' },
+  ];
+
   return (
-    <header className="border-b">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="container flex h-16 items-center">
+        <div className="hidden md:flex md:gap-x-6 md:items-center">
           <Link href="/" className="text-xl font-bold">
             Store
           </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
+          
+          {mainNavigation.map((item) => (
             <Link
-              href="/products" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              key={item.name}
+              href={item.href}
+              className={`text-sm font-medium transition-colors hover:text-foreground/80 ${
+                isActive(item.href) ? 'text-foreground' : 'text-foreground/60'
+              }`}
             >
-              Products
+              {item.name}
             </Link>
-            {categories?.map((category) => (
-              <Link
-                key={category.id}
-                href={`/category/${category.slug}`}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          ))}
+          
+          {/* Categories Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className={`text-sm font-medium transition-colors hover:text-foreground/80 flex items-center gap-1 px-0 h-auto py-0 ${
+                  pathname.startsWith('/category/') ? 'text-foreground' : 'text-foreground/60'
+                }`}
               >
-                {category.name}
-              </Link>
-            ))}
-          </nav>
+                Categories <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {categoriesLoading ? (
+                <DropdownMenuItem disabled>Loading categories...</DropdownMenuItem>
+              ) : categories && categories.length > 0 ? (
+                categories.map((category) => (
+                  <DropdownMenuItem key={category.id} asChild>
+                    <Link 
+                      href={`/category/${category.slug}`}
+                      className={isCategoryActive(category.slug) ? 'bg-muted' : ''}
+                    >
+                      {category.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))
+              ) : (
+                <DropdownMenuItem disabled>No categories available</DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Search Link */}
-          <Link href="/search">
-            <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
+        <Sheet>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" className="-ml-2">
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Toggle menu</span>
             </Button>
-          </Link>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+            <nav className="flex flex-col gap-4">
+              {mainNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`text-lg font-medium ${
+                    isActive(item.href) ? 'text-foreground' : 'text-foreground/60'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              
+              <div className="text-lg font-medium">Categories</div>
+              <div className="pl-4 flex flex-col gap-2">
+                {!mounted || categoriesLoading ? (
+                  <div className="text-sm text-muted-foreground">Loading...</div>
+                ) : categories && categories.length > 0 ? (
+                  categories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/category/${category.slug}`}
+                      className={`text-sm font-medium ${
+                        isCategoryActive(category.slug) ? 'text-foreground' : 'text-foreground/60'
+                      }`}
+                    >
+                      {category.name}
+                    </Link>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">No categories available</div>
+                )}
+              </div>
+              
+              {/* Mobile Account Links */}
+              {mounted && user && (
+                <>
+                  <div className="text-lg font-medium">Account</div>
+                  <div className="pl-4 flex flex-col gap-2">
+                    <Link 
+                      href="/profile" 
+                      className={`text-sm font-medium ${
+                        isActive('/profile') ? 'text-foreground' : 'text-foreground/60'
+                      }`}
+                    >
+                      My Profile
+                    </Link>     
+                    {user.role === 'admin' && (
+                      <Link 
+                        href="/admin"
+                        className={`text-sm font-medium ${
+                          pathname.startsWith('/admin') ? 'text-foreground' : 'text-foreground/60'
+                        }`}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="text-sm font-medium text-foreground/60 hover:text-foreground text-left"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </>
+              )}
+            </nav>
+          </SheetContent>
+        </Sheet>
 
-          {/* Cart Link */}
-          <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
+        <div className="ml-auto flex items-center gap-4">
+          <SearchBox
+            placeholder="Search products..."
+            className="w-full max-w-[200px] lg:max-w-[300px]"
+          />
+
+          <Link href="/cart" className="relative">
+            <Button variant="ghost" size="icon">
               <ShoppingCart className="h-5 w-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                  {totalItems}
+              {mounted && cartItemsCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                  {cartItemsCount}
                 </span>
               )}
             </Button>
           </Link>
 
-          {/* Account Menu */}
-          {user ? (
+          {mounted && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -100,14 +215,17 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/profile">My Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/orders">My Orders</Link>
-                </DropdownMenuItem>
+                
+               
                 {user.role === 'admin' && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">Admin Dashboard</Link>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  </>
                 )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
@@ -115,102 +233,11 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <Link href="/login">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
+              <Button variant="ghost">Login</Button>
             </Link>
           )}
-
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <div className="flex flex-col gap-4">
-                {/* Mobile Search */}
-                <form onSubmit={handleSearch} className="flex items-center">
-                  <div className="relative w-full">
-                    <Input
-                      type="search"
-                      placeholder="Search products..."
-                      className="pr-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    <Button 
-                      type="submit" 
-                      variant="ghost" 
-                      size="icon" 
-                      className="absolute right-0 top-0"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
-
-                {/* Mobile Navigation */}
-                <nav className="flex flex-col gap-4">
-                  <Link 
-                    href="/products" 
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Products
-                  </Link>
-                  {user ? (
-                    <>
-                      <Link 
-                        href="/profile" 
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        My Profile
-                      </Link>
-                      <Link 
-                        href="/orders" 
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        My Orders
-                      </Link>
-                      {user.role === 'admin' && (
-                        <Link 
-                          href="/admin" 
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          Admin Dashboard
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors text-left"
-                      >
-                        Logout
-                      </button>
-                    </>
-                  ) : (
-                    <Link 
-                      href="/login" 
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Login
-                    </Link>
-                  )}
-                  {categories?.map((category) => (
-                    <Link 
-                      key={category.id}
-                      href={`/category/${category.slug}`}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
-      </div>
+      </nav>
     </header>
   );
 } 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import api from '@/lib/api';
+import ClientOnly from '@/components/ClientOnly';
 
 // Client components
 import { ProductList } from '@/components/product/ProductList';
@@ -115,7 +116,9 @@ export default async function CategoryPage({ params }: { params: { slug: string 
             )}
           </div>
 
-          <ProductList categorySlug={params.slug} />
+          <div className="min-h-[400px]">
+            <ProductList key={`category-${params.slug}`} categorySlug={params.slug} />
+          </div>
         </div>
       </div>
     </>

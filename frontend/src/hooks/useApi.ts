@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "@/lib/api";
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
@@ -20,15 +20,25 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
     isLoading: false,
     error: null
   });
+  
+  // Use refs to prevent unnecessary rerenders
+  const urlRef = useRef(url);
+  const skipRef = useRef(skip);
+  
+  // Update refs when props change
+  useEffect(() => {
+    urlRef.current = url;
+    skipRef.current = skip;
+  }, [url, skip]);
 
   const fetchData = useCallback(
     async (config?: AxiosRequestConfig) => {
-      if (skip) return;
+      if (skipRef.current) return;
 
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        const response: AxiosResponse<T> = await api.get(url, config);
+        const response: AxiosResponse<T> = await api.get(urlRef.current, config);
         setState({
           data: response.data,
           isLoading: false,
@@ -45,7 +55,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
         throw error;
       }
     },
-    [url, skip]
+    [] // No dependencies since we're using refs
   );
 
   const postData = useCallback(
@@ -53,7 +63,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        const response: AxiosResponse<T> = await api.post(url, data, config);
+        const response: AxiosResponse<T> = await api.post(urlRef.current, data, config);
         setState({
           data: response.data,
           isLoading: false,
@@ -70,7 +80,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
         throw error;
       }
     },
-    [url]
+    [] // No dependencies since we're using refs
   );
 
   const putData = useCallback(
@@ -78,7 +88,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        const response: AxiosResponse<T> = await api.put(url, data, config);
+        const response: AxiosResponse<T> = await api.put(urlRef.current, data, config);
         setState({
           data: response.data,
           isLoading: false,
@@ -95,7 +105,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
         throw error;
       }
     },
-    [url]
+    [] // No dependencies since we're using refs
   );
 
   const deleteData = useCallback(
@@ -103,7 +113,7 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        const response: AxiosResponse<T> = await api.delete(url, config);
+        const response: AxiosResponse<T> = await api.delete(urlRef.current, config);
         setState({
           data: response.data,
           isLoading: false,
@@ -120,14 +130,14 @@ export function useApi<T = unknown>(url: string, options: UseApiOptions = {}) {
         throw error;
       }
     },
-    [url]
+    [] // No dependencies since we're using refs
   );
 
   useEffect(() => {
-    if (immediate && !skip) {
+    if (immediate && !skipRef.current) {
       fetchData();
     }
-  }, [fetchData, immediate, skip]);
+  }, []); // Only run on mount since we're using refs
 
   return {
     ...state,

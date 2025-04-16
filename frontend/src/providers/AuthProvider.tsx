@@ -17,6 +17,7 @@ interface AuthContextType {
     last_name: string;
   }) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshAuth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

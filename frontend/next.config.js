@@ -25,7 +25,7 @@ const nextConfig = {
       },
     ];
   },
-  // Add multiple redirects for better routing
+
   async redirects() {
     return [
       {
@@ -48,5 +48,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
 module.exports = nextConfig; 

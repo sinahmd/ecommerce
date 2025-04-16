@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { ProductList } from '@/components/product/ProductList';
 import api from '@/lib/api';
+import ClientOnly from '@/components/ClientOnly';
 
 // Client-side components
 import ProductFilters from './components/ProductFilters';
@@ -61,10 +62,21 @@ export default async function ProductsPage({
           {/* Sidebar/Filter */}
           <div className="w-full md:w-64 shrink-0">
             <div className="sticky top-24 space-y-8">
-              <ProductFilters 
-                categories={categories} 
-                selectedCategory={selectedCategory} 
-              />
+              <ClientOnly
+                fallback={
+                  <div className="space-y-4">
+                    <div className="h-8 w-40 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-36 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-28 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                }
+              >
+                <ProductFilters 
+                  categories={categories} 
+                  selectedCategory={selectedCategory} 
+                />
+              </ClientOnly>
             </div>
           </div>
 
@@ -81,7 +93,11 @@ export default async function ProductsPage({
               </p>
             </div>
 
-            <ProductList categorySlug={selectedCategory || undefined} />
+            {/* Remove ClientOnly wrapper */}
+            <div className="min-h-[400px]">
+              {/* This will be rendered on server for SEO, then hydrated on client */}
+              <ProductList key={`products-${selectedCategory || 'all'}`} categorySlug={selectedCategory || undefined} />
+            </div>
           </div>
         </div>
       </div>

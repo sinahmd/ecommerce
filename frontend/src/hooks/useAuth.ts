@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import api, { endpoints } from "@/lib/api";
+import api, { endpoints, CSRFTokenManager } from "@/lib/api";
 import { AxiosError } from "axios";
 import { ErrorResponse } from "@/types/api";
-import axios from "axios";
 
 export interface User {
   id: number;
@@ -23,6 +22,88 @@ interface AuthState {
   error: string | null;
 }
 
+// Create a singleton for auth state management across the application
+const AuthStateManager = (() => {
+  let currentUser: User | null = null;
+  let isAuthenticated = false;
+  let lastCheckTime = 0;
+  let isCheckingAuth = false;
+  let authChecked = false;
+  
+  // Auth State Listeners (for components that need to react to auth changes)
+  const listeners: Array<(user: User | null, isAuth: boolean) => void> = [];
+  
+  const addListener = (callback: (user: User | null, isAuth: boolean) => void) => {
+    listeners.push(callback);
+    return () => {
+      const index = listeners.indexOf(callback);
+      if (index !== -1) listeners.splice(index, 1);
+    };
+  };
+  
+  const notifyListeners = () => {
+    listeners.forEach(listener => listener(currentUser, isAuthenticated));
+  };
+  
+  const setUser = (user: User | null) => {
+    currentUser = user;
+    isAuthenticated = !!user;
+    notifyListeners();
+  };
+  
+  // Check authentication status - returns true if check was performed
+  const checkAuth = async (): Promise<boolean> => {
+    const now = Date.now();
+    
+    // Don't check if already checking or checked recently (throttling)
+    if (isCheckingAuth || (now - lastCheckTime < 30000 && lastCheckTime > 0)) {
+      return false;
+    }
+    
+    isCheckingAuth = true;
+    lastCheckTime = now;
+    
+    try {
+      // Ensure CSRF token is available for auth requests
+      await CSRFTokenManager.initialize();
+      
+      // Check user authentication
+      const response = await api.get(endpoints.auth.user);
+      
+      if (response.data) {
+        setUser(response.data);
+      } else {
+        setUser(null);
+      }
+      
+      authChecked = true;
+      return true;
+    } catch (error: any) {
+      // 401 is expected for guest users
+      if (error.response?.status === 401) {
+        setUser(null);
+      } else {
+        console.error("Unexpected error checking auth:", error);
+        setUser(null);
+      }
+      
+      authChecked = true;
+      return true;
+    } finally {
+      isCheckingAuth = false;
+    }
+  };
+  
+  return {
+    getUser: () => currentUser,
+    isAuthenticated: () => isAuthenticated,
+    hasCheckedAuth: () => authChecked,
+    setUser,
+    checkAuth,
+    addListener
+  };
+})();
+
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
@@ -33,96 +114,51 @@ const initialState: AuthState = {
 export function useAuth() {
   const router = useRouter();
   const [state, setState] = useState<AuthState>(initialState);
-
-  // Use refs instead of localStorage to track auth checking state
-  const isCheckingAuthRef = useRef(false);
-  const lastCheckTimeRef = useRef(0);
-  const authCheckedRef = useRef(false);
-
-  const setUser = useCallback((user: User | null) => {
-    setState((prev) => ({
+  
+  // Update state based on the auth manager
+  const updateStateFromManager = useCallback(() => {
+    setState(prev => ({
       ...prev,
-      user,
-      isAuthenticated: !!user
+      user: AuthStateManager.getUser(),
+      isAuthenticated: AuthStateManager.isAuthenticated(),
+      isLoading: false
     }));
   }, []);
-
-  const setLoading = useCallback((isLoading: boolean) => {
-    setState((prev) => ({ ...prev, isLoading }));
-  }, []);
-
+  
+  // Set error message
   const setError = useCallback((error: string | null) => {
-    setState((prev) => ({ ...prev, error }));
+    setState(prev => ({ ...prev, error }));
+  }, []);
+  
+  // Set loading state
+  const setLoading = useCallback((isLoading: boolean) => {
+    setState(prev => ({ ...prev, isLoading }));
   }, []);
 
   // Check if user is already authenticated on mount
   useEffect(() => {
-    const loadUser = async () => {
-      // Don't check again if we've already completed a check
-      if (authCheckedRef.current) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        // Use refs instead of localStorage for tracking state
-        const currentTime = Date.now();
-
-        // If we've checked auth in the last 30 seconds, don't check again
-        // This prevents rapid successive auth checks causing the redirect loop
-        if (
-          isCheckingAuthRef.current ||
-          (currentTime - lastCheckTimeRef.current < 30000 &&
-            lastCheckTimeRef.current > 0)
-        ) {
-          console.log(
-            "Auth check already in progress or very recent, skipping..."
-          );
-          setLoading(false);
-          return;
-        }
-
-        // Set checking flag and update timestamp
-        isCheckingAuthRef.current = true;
-        lastCheckTimeRef.current = currentTime;
-
-        try {
-          // Try to get user data from server
-          const response = await api.get(endpoints.auth.user);
-
-          if (response.data) {
-            // Use user data from server
-            console.log("User authenticated:", response.data);
-            setUser(response.data);
-          } else {
-            console.log("No user data returned");
-            setUser(null);
-          }
-        } catch (error: unknown) {
-          // If it's a 401 unauthorized, just set user to null without redirecting
-          // This is a normal case for guest users
-          if (axios.isAxiosError(error) && error.response?.status === 401) {
-            console.log("User not authenticated (normal for guest users)");
-            setUser(null);
-          } else {
-            // For other errors, also set user to null
-            console.error("Unexpected error checking auth:", error);
-            setUser(null);
-          }
-        } finally {
-          // Clear checking flag
-          isCheckingAuthRef.current = false;
-          authCheckedRef.current = true;
-        }
-      } finally {
-        setLoading(false);
-      }
+    // If auth has been checked, just update from the manager
+    if (AuthStateManager.hasCheckedAuth()) {
+      updateStateFromManager();
+      return;
+    }
+    
+    // Otherwise perform authentication check
+    const checkAuthentication = async () => {
+      setLoading(true);
+      await AuthStateManager.checkAuth();
+      updateStateFromManager();
     };
-
-    loadUser();
-  }, [setLoading, setUser]);
+    
+    checkAuthentication();
+    
+    // Subscribe to auth state changes
+    const unsubscribe = AuthStateManager.addListener(() => {
+      updateStateFromManager();
+    });
+    
+    return unsubscribe;
+  }, [updateStateFromManager, setLoading]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -130,19 +166,16 @@ export function useAuth() {
       setError(null);
 
       try {
-        console.log("Making login API request...");
+        // Ensure CSRF token is available for login
+        await CSRFTokenManager.initialize();
+        
         const response = await api.post(endpoints.auth.login, {
           email,
           password
         });
 
-        console.log("Login API response:", response.data);
-
         if (response.data.user) {
-          setUser(response.data.user);
-          authCheckedRef.current = true;
-          // Reset the last check time to force a fresh auth check if needed
-          lastCheckTimeRef.current = 0;
+          AuthStateManager.setUser(response.data.user);
           return true;
         } else {
           setError("Invalid response from server");
@@ -160,7 +193,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [setError, setLoading, setUser]
+    [setError, setLoading]
   );
 
   const register = useCallback(
@@ -175,12 +208,14 @@ export function useAuth() {
       setError(null);
 
       try {
+        // Ensure CSRF token is available for registration
+        await CSRFTokenManager.initialize();
+        
         const response = await api.post(endpoints.auth.register, userData);
 
         // If registration also logs the user in and returns user data
         if (response.data.user) {
-          setUser(response.data.user);
-          authCheckedRef.current = true;
+          AuthStateManager.setUser(response.data.user);
         }
 
         return true;
@@ -195,29 +230,32 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [setError, setLoading, setUser]
+    [setError, setLoading]
   );
 
   const logout = useCallback(async () => {
     try {
+      setLoading(true);
+      
+      // Ensure CSRF token is available for logout
+      await CSRFTokenManager.initialize();
+      
       await api.post(endpoints.auth.logout);
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
       // Clear user state
-      setUser(null);
-      authCheckedRef.current = true;
+      AuthStateManager.setUser(null);
+      setLoading(false);
       router.push("/");
     }
-  }, [router, setUser]);
+  }, [router, setLoading]);
 
   return {
     ...state,
     login,
     register,
     logout,
-    setUser,
-    setLoading,
-    setError
+    refreshAuth: AuthStateManager.checkAuth
   };
 }

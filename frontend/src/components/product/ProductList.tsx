@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { ProductCard } from './ProductCard';
 import { useProducts, useCategoryProducts } from '@/hooks/useProducts';
 import { useCartContext } from '@/providers/CartProvider';
 import { Product as ProductType } from '@/types/product';
 import { getFullImageUrl } from '@/lib/utils';
+import { SearchBox } from '@/components/ui/search-box';
+import { Pagination } from '@/components/ui/pagination';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 interface ProductListProps {
   products?: ProductType[];
@@ -14,66 +24,120 @@ interface ProductListProps {
 }
 
 export function ProductList({ products, limit, categorySlug }: ProductListProps) {
-  // For specific category - only used when categorySlug is provided
-  const { 
-    products: categoryProducts, 
-    isLoading: categoryLoading, 
-    error: categoryError 
-  } = useCategoryProducts(
-    categorySlug || '', 
-    { skip: !categorySlug }
-  );
+  // Get search params for filtering and pagination
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   
-  // For all products - only used when no categorySlug is provided
-  const { 
-    products: allProducts, 
-    isLoading: productsLoading, 
-    error: productsError 
-  } = useProducts(
-    { limit },
-    { skip: !!categorySlug || !!products }
-  );
+  // Extract search parameters
+  const search = searchParams.get('search') || '';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = parseInt(searchParams.get('page_size') || '8', 10);
+  const sortBy = searchParams.get('sort_by') || 'relevance';
   
-  const [displayProducts, setDisplayProducts] = useState<ProductType[]>([]);
-  const { addItem } = useCartContext();
-
+  // Prevent hydration issues
+  const [mounted, setMounted] = useState(false);
+  const initialRender = useRef(true);
+  
+  // Handle client-side hydration issues
   useEffect(() => {
-    console.log('ProductList effect running with:', { 
-      categorySlug, 
-      'products prop length': products?.length,
-      'categoryProducts length': categoryProducts?.length,
-      'allProducts length': allProducts?.length
-    });
+    setMounted(true);
+    return () => {
+      // This cleanup helps prevent memory leaks
+      setMounted(false);
+    };
+  }, []);
+  
+  // Memoize query params to prevent unnecessary re-renders
+  const queryParams = useMemo(() => ({
+    search,
+    page,
+    page_size: pageSize as 4 | 8 | 16 | 32,
+    sortBy: sortBy as any
+  }), [search, page, pageSize, sortBy]);
+  
+  // For specific category - only used when categorySlug is provided
+  const {
+    products: categoryProducts,
+    isLoading: categoryLoading,
+    error: categoryError,
+    totalPages: categoryTotalPages,
+    currentPage: categoryCurrPage,
+    pageSize: categoryPageSize,
+    totalItems: categoryTotalItems,
+  } = useCategoryProducts(categorySlug || '', {
+    params: queryParams,
+    skip: !mounted || !categorySlug || !!products
+  });
 
-    // Also log a sample product from each source to understand the structure
-    if (products?.length) console.log('Sample product from props:', products[0]);
-    if (categoryProducts?.length) console.log('Sample category product:', categoryProducts[0]);
-    if (allProducts?.length) console.log('Sample all product:', allProducts[0]);
+  // For all products - only used when no category is specified
+  const {
+    products: allProducts,
+    isLoading: productsLoading,
+    error: productsError,
+    totalPages,
+    currentPage,
+    pageSize: allPageSize,
+    totalItems
+  } = useProducts(queryParams, {
+    skip: !mounted || !!categorySlug || !!products
+  });
 
-    if (products) {
-      // If products are directly provided as props, use them
-      console.log('Using products from props');
-      setDisplayProducts(products);
-    } else if (categorySlug && categoryProducts?.length > 0) {
-      // If a category is selected and we have products for that category
-      console.log('Using category products for slug:', categorySlug);
-      setDisplayProducts(categoryProducts);
-    } else if (!categorySlug && allProducts?.length > 0) {
-      // If no category is selected (All Products) and we have products
-      console.log('Using all products (no category selected)');
-      setDisplayProducts(allProducts);
-    } else {
-      // Reset in case of no products
-      console.log('No products available to display');
-      setDisplayProducts([]);
-    }
+  // Calculate displayed products - memoize to prevent unnecessary re-renders
+  const displayProducts = useMemo(() => {
+    if (products) return products;
+    if (categorySlug && categoryProducts) return categoryProducts;
+    if (!categorySlug && allProducts) return allProducts;
+    return [];
   }, [products, categorySlug, categoryProducts, allProducts]);
 
+  const { addItem } = useCartContext();
+  
+  // Update search params - memoized to prevent recreation on every render
+  const updateSearchParams = useCallback((params: Record<string, string>) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    });
+    
+    router.push(`${pathname}?${newParams.toString()}`);
+  }, [searchParams, router, pathname]);
+
+  const handleSearch = useCallback((query: string) => {
+    updateSearchParams({ search: query, page: '1' });
+  }, [updateSearchParams]);
+
+  const handleSortChange = useCallback((value: string) => {
+    updateSearchParams({ sort_by: value, page: '1' });
+  }, [updateSearchParams]);
+
   // Determine loading and error state
-  const isLoading = products ? false : categorySlug ? categoryLoading : productsLoading;
+  const isLoading = !mounted || (products ? false : categorySlug ? categoryLoading : productsLoading);
   const error = products ? null : categorySlug ? categoryError : productsError;
 
-  const handleAddToCart = async (productId: number) => {
+  // Determine pagination properties
+  const paginationProps = useMemo(() => categorySlug ? {
+    totalPages: categoryTotalPages || 1,
+    currentPage: categoryCurrPage || 1,
+    pageSize: categoryPageSize || 8,
+    totalItems: categoryTotalItems || 0
+  } : {
+    totalPages: totalPages || 1,
+    currentPage: currentPage || 1,
+    pageSize: allPageSize || 8,
+    totalItems: totalItems || 0
+  }, [
+    categorySlug, 
+    categoryTotalPages, categoryCurrPage, categoryPageSize, categoryTotalItems,
+    totalPages, currentPage, allPageSize, totalItems
+  ]);
+
+  const handleAddToCart = useCallback((productId: number) => {
     try {
       const product = displayProducts.find(p => p.id === productId);
       if (product) {
@@ -85,93 +149,139 @@ export function ProductList({ products, limit, categorySlug }: ProductListProps)
           slug: product.slug,
           images: [getFullImageUrl(product.image)]
         });
-        console.log('Product added to cart');
       }
     } catch (error) {
       console.error('Failed to add product to cart', error);
     }
-  };
+  }, [displayProducts, addItem]);
 
-  if (isLoading) {
+  if (!mounted) {
+    // Server render or initial client render
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className="animate-pulse">
-            <div className="bg-muted h-64 rounded-lg mb-3"></div>
-            <div className="bg-muted h-4 rounded w-3/4 mb-2"></div>
-            <div className="bg-muted h-4 rounded w-1/2"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 text-destructive rounded-md">
-        Error loading products. Please try again later.
-      </div>
-    );
-  }
-
-  if (displayProducts?.length === 0) {
-    return (
-      <div className="p-4 text-center text-muted-foreground">
-        No products found.
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <div key={n} className="border rounded-lg p-4 h-[300px] animate-pulse">
+              <div className="h-36 bg-gray-200 rounded-md mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {displayProducts.map((product) => {
-        // Get category info with fallbacks for different data structures
-        const categoryName = product.primary_category?.name || 
-                            (product.category_names && product.category_names[0]) || 
-                            (product.category?.name) || 
-                            '';
+    <div className="space-y-8">
+      {/* Search and sort controls */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <SearchBox
+          key={`search-${search}-${categorySlug || "all"}`}
+          placeholder="Search products..."
+          className="w-full sm:w-80"
+          defaultValue={search}
+          onSearch={handleSearch}
+        />
         
-        const categorySlug = product.primary_category?.slug || 
-                            (product.category_slugs && product.category_slugs[0]) || 
-                            (product.category?.slug) || 
-                            '';
-        
-        return (
-          <ProductCard 
-            key={product.id} 
-            product={{
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              price: product.price,
-              image: getFullImageUrl(product.image),
-              category: categoryName,
-              categorySlug: categorySlug,
-              stock: product.stock
+        {mounted && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <Select
+              key={`sort-${sortBy}-${categorySlug || "all"}`}
+              value={sortBy}
+              onValueChange={handleSortChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Relevance" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="relevance">Relevance</SelectItem>
+                <SelectItem value="price_low_high">Price: Low to High</SelectItem>
+                <SelectItem value="price_high_low">Price: High to Low</SelectItem>
+                <SelectItem value="newest">Newest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+      
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <div key={n} className="border rounded-lg p-4 h-[300px] animate-pulse">
+              <div className="h-36 bg-gray-200 rounded-md mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">Error loading products. Please try again later.</p>
+          <pre className="text-xs text-left bg-gray-100 p-4 rounded max-w-2xl mx-auto overflow-auto">
+            {JSON.stringify(error, null, 2)}
+          </pre>
+        </div>
+      ) : displayProducts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-lg mb-4">No products found matching your criteria.</p>
+          <button 
+            className="text-blue-600 hover:underline"
+            onClick={() => {
+              // Clear search and filters
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete('search');
+              params.set('page', '1');
+              router.push(`${pathname}?${params.toString()}`);
             }}
-            onAddToCart={() => handleAddToCart(product.id)}
-          />
-        );
-      })}
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {displayProducts.map((product) => {
+              // Get category info with fallbacks for different data structures
+              const categoryName = product.primary_category?.name || 
+                                  (product.category_names && product.category_names[0]) || 
+                                  (product.category?.name) || 
+                                  '';
+              
+              const categorySlug = product.primary_category?.slug || 
+                                  (product.category_slugs && product.category_slugs[0]) || 
+                                  (product.category?.slug) || 
+                                  '';
+              
+              return (
+                <ProductCard 
+                  key={product.id} 
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price: product.price,
+                    image: getFullImageUrl(product.image),
+                    category: categoryName,
+                    categorySlug: categorySlug,
+                    stock: product.stock
+                  }}
+                  onAddToCart={() => handleAddToCart(product.id)}
+                />
+              );
+            })}
+          </div>
+          
+          {/* Pagination controls */}
+          {paginationProps.totalPages > 1 && (
+            <Pagination 
+              {...paginationProps}
+              className="mt-8"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 } 
-      // {displayProducts.map((product) => (
-      //   <ProductCard 
-      //     key={product.id} 
-      //     product={{
-      //       id: product.id,
-      //       name: product.name,
-      //       slug: product.slug,
-      //       price: product.price,
-      //       image: getFullImageUrl(product.image),
-      //       category: product.primary_category ? product.primary_category.name : '',
-      //       categorySlug: product.primary_category ? product.primary_category.slug : '',
-      //       stock: product.stock
-      //     }}
-      //     onAddToCart={() => handleAddToCart(product.id)}
-      //   />
-      // ))}
-//     </div>
-//   );
-// } 

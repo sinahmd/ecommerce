@@ -1,18 +1,16 @@
 "use client";
 
-import { ReactNode } from "react";
-import Header from "./Header";
-import { Footer } from "./Footer";
+import React from 'react';
+import { Header } from './Header';
+import { Footer } from './Footer';
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        {children}
+      </main>
       <Footer />
     </div>
   );

@@ -1,8 +1,9 @@
 import { useApi } from "./useApi";
 import { endpoints } from "@/lib/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Product } from "@/types/product";
 import { UseApiOptions } from "./useApi";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 export interface Category {
   id: number;
@@ -17,7 +18,7 @@ interface UseProductsParams {
   minPrice?: number;
   maxPrice?: number;
   page?: number;
-  limit?: number;
+  page_size?: 4 | 8 | 16 | 32;
 }
 
 interface UseProductsResult {
@@ -26,18 +27,33 @@ interface UseProductsResult {
   error: Error | null;
   totalPages: number;
   currentPage: number;
+  pageSize: number;
+  totalItems: number;
+}
+
+// Extend the base result with category fetching capability
+interface CategoryProductsResult extends UseProductsResult {
+  fetchCategoryProducts: (
+    config?: AxiosRequestConfig
+  ) => Promise<AxiosResponse<CategoryProductsResponse> | undefined>;
 }
 
 // Define interface for API responses
 interface ProductListResponse {
-  products?: Product[];
-  total_pages?: number;
-  current_page?: number;
+  products: Product[];
+  total_pages: number;
+  current_page: number;
+  total_items: number;
+  page_size: number;
 }
 
 interface CategoryProductsResponse {
   category?: Category;
-  products?: Product[];
+  products: Product[];
+  total_pages: number;
+  current_page: number;
+  total_items: number;
+  page_size: number;
 }
 
 export function useProducts(
@@ -46,24 +62,48 @@ export function useProducts(
 ): UseProductsResult {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(params.page || 1);
+  const [pageSize, setPageSize] = useState<number>(params.page_size || 8);
+  const [totalItems, setTotalItems] = useState(0);
 
-  // Prepare query parameters
-  const queryParams: Record<string, string> = {};
-  if (params.search) queryParams.search = params.search;
-  if (params.sortBy) queryParams.sort_by = params.sortBy;
-  if (params.minPrice) queryParams.min_price = params.minPrice.toString();
-  if (params.maxPrice) queryParams.max_price = params.maxPrice.toString();
-  if (params.page) queryParams.page = params.page.toString();
-  if (params.limit) queryParams.limit = params.limit.toString();
+  // Convert params to API query parameters
+  const queryParams: Record<string, string | number | undefined> = {
+    search: params.search,
+    sort_by: params.sortBy,
+    min_price: params.minPrice,
+    max_price: params.maxPrice,
+    page: params.page,
+    page_size: params.page_size
+  };
+
+  // Filter out undefined values
+  const filteredParams = Object.fromEntries(
+    Object.entries(queryParams).filter(([, v]) => v !== undefined)
+  );
 
   // Use the useApi hook with proper type
-  const { data, isLoading, error } = useApi<ProductListResponse | Product[]>(
+  const { data, isLoading, error, fetchData } = useApi<ProductListResponse>(
     endpoints.products.list().url,
     {
-      immediate: true,
+      immediate: false,
       ...options
     }
   );
+
+  // Fetch data when component mounts or params change
+  useEffect(() => {
+    if (!options.skip) {
+      fetchData({ params: filteredParams });
+    }
+  }, [
+    fetchData,
+    params.search,
+    params.sortBy,
+    params.minPrice,
+    params.maxPrice,
+    params.page,
+    params.page_size,
+    options.skip
+  ]);
 
   // Add debug logging
   useEffect(() => {
@@ -73,13 +113,15 @@ export function useProducts(
   }, [data]);
 
   // Extract and normalize products from the response data
-  const products = Array.isArray(data) ? data : data?.products || [];
+  const products = data?.products || [];
 
   // Update pagination information when data changes
   useEffect(() => {
-    if (data && !Array.isArray(data)) {
+    if (data) {
       setTotalPages(data.total_pages || 1);
       setCurrentPage(data.current_page || 1);
+      setPageSize(data.page_size || 8);
+      setTotalItems(data.total_items || 0);
     }
   }, [data]);
 
@@ -88,7 +130,9 @@ export function useProducts(
     isLoading,
     error: error as Error | null,
     totalPages,
-    currentPage
+    currentPage,
+    pageSize,
+    totalItems
   };
 }
 
@@ -120,40 +164,99 @@ export function useCategories(options = {}) {
   };
 }
 
-export function useCategoryProducts(slug: string, options = {}) {
+export function useCategoryProducts(
+  slug: string,
+  options: { params?: UseProductsParams; skip?: boolean } = {}
+): CategoryProductsResult {
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(options.params?.page || 1);
+  const [pageSize, setPageSize] = useState<number>(
+    options.params?.page_size || 8
+  );
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Stabilize params by using a ref
+  const optionsRef = useRef(options);
+  const slugRef = useRef(slug);
+  const prevFetchRef = useRef<string>(''); // Track previous fetch params
+
+  // Update refs when props change
+  useEffect(() => {
+    optionsRef.current = options;
+    slugRef.current = slug;
+  }, [options, slug]);
+
+  // Convert params to API query parameters - do this only once
+  const queryParams = useMemo(() => {
+    const params: Record<string, string | number | undefined> = {
+      search: options.params?.search,
+      sort_by: options.params?.sortBy,
+      min_price: options.params?.minPrice,
+      max_price: options.params?.maxPrice,
+      page: options.params?.page,
+      page_size: options.params?.page_size
+    };
+
+    // Filter out undefined values
+    return Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined)
+    );
+  }, [
+    options.params?.search,
+    options.params?.sortBy,
+    options.params?.minPrice,
+    options.params?.maxPrice,
+    options.params?.page,
+    options.params?.page_size
+  ]);
+
   // Use a default list endpoint if no slug is provided
   const apiUrl = slug
     ? endpoints.products.category(slug).url
     : endpoints.products.list().url;
 
-  const { data, isLoading, error, fetchData } = useApi<
-    CategoryProductsResponse | Product[] | Product
-  >(apiUrl, {
-    ...options,
-    // Don't skip the request even if slug is empty - it will fetch all products
-    skip: false
-  });
+  const { data, isLoading, error, fetchData } =
+    useApi<CategoryProductsResponse>(apiUrl, {
+      immediate: false,
+      skip: options.skip || false
+    });
 
-  // Add debug logging
+  // Fetch data when component mounts or params change
   useEffect(() => {
-    if (data) {
-      console.log("useCategoryProducts API response for slug:", slug, data);
+    if (!options.skip && slug) {
+      // Create a unique string to represent this fetch request
+      const fetchKey = `${slug}-${JSON.stringify(queryParams)}`;
+      
+      // Only fetch if params have changed to prevent redundant calls
+      if (prevFetchRef.current !== fetchKey) {
+        console.log("Fetching category products for slug:", slug, "with params:", queryParams);
+        fetchData({ params: queryParams });
+        prevFetchRef.current = fetchKey;
+      }
     }
-  }, [data, slug]);
+  }, [fetchData, options.skip, slug, queryParams]);
 
   // Extract and normalize products from the response data
-  const products = Array.isArray(data)
-    ? data
-    : data && "products" in data && data.products
-    ? data.products
-    : data
-    ? [data as Product]
-    : [];
+  const products = data?.products || [];
+
+  // Update pagination information when data changes
+  useEffect(() => {
+    if (data) {
+      setTotalPages(data.total_pages || 1);
+      setCurrentPage(data.current_page || 1);
+      setPageSize(data.page_size || 8);
+      setTotalItems(data.total_items || 0);
+    }
+  }, [data]);
 
   return {
     products,
     isLoading,
-    error,
-    fetchCategoryProducts: fetchData
+    error: error as Error | null,
+    fetchCategoryProducts: fetchData,
+    totalPages,
+    currentPage,
+    pageSize,
+    totalItems
   };
 }

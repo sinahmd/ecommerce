@@ -21,8 +21,12 @@ class ProductViewSet(viewsets.ModelViewSet):
         sort_by = request.query_params.get('sort_by', 'relevance')
         min_price = request.query_params.get('min_price')
         max_price = request.query_params.get('max_price')
-        page = request.query_params.get('page', 1)
-        limit = request.query_params.get('limit', 12)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 8))
+        
+        # Validate page_size (allowed values: 4, 8, 16, 32)
+        if page_size not in [4, 8, 16, 32]:
+            page_size = 8
 
         # Base queryset
         queryset = self.get_queryset()
@@ -57,15 +61,21 @@ class ProductViewSet(viewsets.ModelViewSet):
                 )
             ).order_by('-name_match', '-created_at')
 
-        # Pagination
-        paginator = Paginator(queryset, limit)
-        products = paginator.get_page(page)
+        # Get total count before pagination for metadata
+        total_items = queryset.count()
+        total_pages = (total_items + page_size - 1) // page_size  # Ceiling division
 
-        serializer = self.get_serializer(products, many=True)
+        # Apply pagination directly with slicing for better performance
+        start = (page - 1) * page_size
+        end = start + page_size
+        queryset_page = queryset[start:end]
+
+        serializer = self.get_serializer(queryset_page, many=True)
 
         return Response({
             'products': serializer.data,
-            'total_pages': paginator.num_pages,
-            'current_page': int(page),
-            'total_items': paginator.count
+            'total_items': total_items,
+            'total_pages': total_pages,
+            'current_page': page,
+            'page_size': page_size
         })

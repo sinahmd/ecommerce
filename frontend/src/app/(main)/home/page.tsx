@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import { ProductList } from '@/components/product/ProductList';
-import { useCategories } from '@/hooks/useProducts';
+import { useCategories, useProducts } from '@/hooks/useProducts';
 
 export default function HomePage() {
   const { categories, isLoading: categoriesLoading } = useCategories();
+  
+  // Fetch trending products
+  const { products: trendingProducts } = useProducts({
+    page: 1,
+    page_size: 4,
+    sortBy: 'newest'
+  });
 
   return (
     <div className="space-y-16 pt-10 pb-20">
@@ -80,9 +87,10 @@ export default function HomePage() {
             <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
-
-        {/* Product List Component */}
-        <ProductList limit={4} />
+        
+        {/* Product List Component - updated for pagination */}
+        {/* Pass directly fetched products to avoid pagination controls */}
+        <ProductList products={trendingProducts || []} />
       </section>
 
       {/* Newsletter */}
@@ -106,4 +114,4 @@ export default function HomePage() {
       </section>
     </div>
   );
-} 
+}

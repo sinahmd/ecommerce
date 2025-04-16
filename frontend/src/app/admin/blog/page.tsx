@@ -29,7 +29,7 @@ export default function BlogManagementPage() {
       try {
         setIsLoading(true);
         const data = await getBlogPosts();
-        setPosts(data);
+        setPosts(data?.posts ?? []);
       } catch (err) {
         console.error('Error fetching blog posts:', err);
         setError('Failed to load blog posts');

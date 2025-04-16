@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from .models import BlogPost, Tag
 from .serializers import (
     BlogPostListSerializer,
@@ -30,8 +31,48 @@ class BlogPostListView(generics.ListAPIView):
         tag_slug = self.request.query_params.get('tag', None)
         if tag_slug:
             queryset = queryset.filter(tags__slug=tag_slug)
-            
+        
+        # Apply search filter if search parameter is provided
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(excerpt__icontains=search)
+            )
+        
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Get pagination parameters
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 8))
+        
+        # Validate page_size (allowed values: 4, 8, 16, 32)
+        if page_size not in [4, 8, 16, 32]:
+            page_size = 8
+        
+        # Calculate offset and limit
+        offset = (page - 1) * page_size
+        
+        # Get total count for pagination info
+        total_items = queryset.count()
+        total_pages = (total_items + page_size - 1) // page_size  # Ceiling division
+        
+        # Apply pagination
+        queryset = queryset[offset:offset + page_size]
+        
+        serializer = self.get_serializer(queryset, many=True)
+        
+        return Response({
+            'posts': serializer.data,
+            'total_items': total_items,
+            'total_pages': total_pages,
+            'current_page': page,
+            'page_size': page_size
+        })
 
 class BlogPostDetailView(generics.RetrieveAPIView):
     serializer_class = BlogPostDetailSerializer
