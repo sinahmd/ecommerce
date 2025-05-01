@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,9 +7,15 @@ import { AuthRefresh } from "@/components/AuthRefresh";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+  variable: '--font-noto-sans-arabic',
+});
+
 export const metadata: Metadata = {
-  title: "E-Commerce Store",
-  description: "Your one-stop shop for all your needs",
+  title: "فروشگاه آنلاین",
+  description: "فروشگاه یکپارچه برای تمام نیازهای شما",
 };
 
 export default function RootLayout({
@@ -18,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="fa" dir="rtl" suppressHydrationWarning className={notoSansArabic.variable}>
+      <body className="font-sans">
         <Providers>
           {children}
           <Toaster />

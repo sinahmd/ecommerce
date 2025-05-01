@@ -29,8 +29,8 @@ export default function LoginPage() {
       
       if (success) {
         toast({
-          title: "Success",
-          description: "You have been logged in successfully.",
+          title: "موفق",
+          description: "شما با موفقیت وارد شدید",
         });
 
         // Redirect based on user role
@@ -75,23 +75,23 @@ export default function LoginPage() {
             href="/" 
             className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            Back to store
+            بازگشت به فروشگاه
           </Link>
         </div>
         
         <div className="bg-background border rounded-lg shadow-sm p-6 md:p-8">
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <h1 className="text-3xl font-bold">Welcome back</h1>
+              <h1 className="text-3xl font-bold">خوش آمدید</h1>
               <p className="text-muted-foreground">
-                Enter your credentials to sign in to your account
+              برای ورود به حساب کاربری خود اطلاعات کاربری خود را وارد کنید
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  ایمیل
                 </label>
                 <Input
                   id="email"
@@ -108,13 +108,13 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium">
-                    Password
+                    رمزعبور
                   </label>
                   <Link
                     href="/auth/forgot-password"
                     className="text-sm text-primary hover:underline"
                   >
-                    Forgot password?
+                    فراموشی رمزعبور؟
                   </Link>
                 </div>
                 <Input
@@ -129,14 +129,14 @@ export default function LoginPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Sign in"}
+                {isSubmitting ? "درحال ورود..." : "ورود"}
               </Button>
             </form>
 
             <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/auth/register" className="text-primary hover:underline">
-                Sign up
+              حساب کاربری ندارید؟{" "}
+              <Link href="/register" className="text-primary hover:underline">
+                ثبت نام
               </Link>
             </p>
           </div>

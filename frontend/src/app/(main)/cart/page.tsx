@@ -24,8 +24,8 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to proceed with checkout.",
+        title: "نیاز به احراز هویت",
+        description: "لطفا برای ادامه وارد حساب کاربری خود شوید.",
         variant: "destructive",
       });
       router.push('/login');
@@ -40,14 +40,14 @@ export default function CartPage() {
 
   if (!cart?.length) {
     return (
-      <div className="container py-12">
+      <div className="container py-12" dir="rtl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Your Cart is Empty</h1>
+          <h1 className="text-3xl font-bold mb-4">سبد خرید شما خالی است</h1>
           <p className="text-muted-foreground mb-8">
-            Add some products to your cart to see them here.
+          برخی از محصولات را به سبد خرید خود اضافه کنید تا آنها را اینجا ببینید.
           </p>
           <Button onClick={() => router.push('/products')}>
-            Continue Shopping
+          به خرید ادامه دهید
           </Button>
         </div>
       </div>
@@ -55,8 +55,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container py-12">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+    <div className="container py-12" dir="rtl">
+      <h1 className="text-3xl font-bold mb-8">سبد خرید</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
@@ -65,7 +65,7 @@ export default function CartPage() {
               key={item.id}
               className="flex items-center space-x-4 p-4 border rounded-lg"
             >
-              <div className="relative h-24 w-24">
+              <div className="relative h-24 w-24 ml-4">
                 {item.images && item.images[0] && (
                   <Image
                     src={getFullImageUrl(item.images[0])}
@@ -78,13 +78,14 @@ export default function CartPage() {
               <div className="flex-1">
                 <h3 className="font-medium">{item.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  ${item.price}
+                  {item.price.toLocaleString()} تومان
                 </p>
-                <div className="flex items-center space-x-2 mt-2">
+                <div className="flex items-center mt-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                    className="ml-2"
                   >
                     -
                   </Button>
@@ -93,6 +94,7 @@ export default function CartPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                    className="mr-2"
                   >
                     +
                   </Button>
@@ -100,14 +102,14 @@ export default function CartPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem?.(item.id)}
-                    className="text-red-500 hover:text-red-600"
+                    className="text-red-500 hover:text-red-600 mr-2"
                   >
-                    Remove
+                    حذف
                   </Button>
                 </div>
               </div>
               <div className="font-medium">
-                ${(item.price * item.quantity).toFixed(2)}
+                {(item.price * item.quantity).toLocaleString()} تومان
               </div>
             </div>
           ))}
@@ -115,20 +117,20 @@ export default function CartPage() {
 
         <div className="space-y-4">
           <div className="border rounded-lg p-4 space-y-4">
-            <h2 className="text-xl font-semibold">Order Summary</h2>
+            <h2 className="text-xl font-semibold">خلاصه سفارش</h2>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>جمع فرعی</span>
+                <span>{subtotal.toLocaleString()} تومان</span>
               </div>
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>${shipping.toFixed(2)}</span>
+                <span>ارسال</span>
+                <span>{shipping.toLocaleString()} تومان</span>
               </div>
               <div className="border-t pt-2">
                 <div className="flex justify-between font-medium">
-                  <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>مجموع</span>
+                  <span>{total.toLocaleString()} تومان</span>
                 </div>
               </div>
             </div>
@@ -136,7 +138,7 @@ export default function CartPage() {
               className="w-full"
               onClick={handleCheckout}
             >
-              Proceed to Checkout
+              ادامه پرداخت
             </Button>
           </div>
         </div>

@@ -231,6 +231,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, product }: Pr
         formDataToSend.append('image', imageFile);
       }
 
+      console.log(`Sending ${product?.id ? 'PUT' : 'POST'} request to ${product?.id ? `/api/admin/products/${product.id}` : '/api/admin/products'}`);
+      
       let response;
       if (product?.id) {
         // Edit mode
@@ -247,8 +249,16 @@ export default function ProductModal({ isOpen, onClose, onSuccess, product }: Pr
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save product');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          console.error('API error response:', errorData);
+          throw new Error(errorData.error || JSON.stringify(errorData));
+        } else {
+          const errorText = await response.text();
+          console.error('API error non-JSON response:', errorText);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
       }
 
       toast({

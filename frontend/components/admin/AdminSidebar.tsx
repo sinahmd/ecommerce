@@ -15,13 +15,13 @@ import {
 } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
-  { name: 'Categories', href: '/admin/categories', icon: TagIcon },
-  { name: 'Blog', href: '/admin/blog', icon: DocumentTextIcon },
-  { name: 'Users', href: '/admin/users', icon: UsersIcon },
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
-  { name: 'Settings', href: '/admin/settings', icon: CogIcon },
+  { name: 'داشبورد', href: '/admin', icon: HomeIcon },
+  { name: 'محصولات', href: '/admin/products', icon: ShoppingBagIcon },
+  { name: 'دسته‌بندی‌ها', href: '/admin/categories', icon: TagIcon },
+  { name: 'وبلاگ', href: '/admin/blog', icon: DocumentTextIcon },
+  { name: 'کاربران', href: '/admin/users', icon: UsersIcon },
+  { name: 'تحلیل‌ها', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'تنظیمات', href: '/admin/settings', icon: CogIcon },
 ];
 
 export default function AdminSidebar() {
@@ -38,9 +38,9 @@ export default function AdminSidebar() {
   }, [user]);
 
   return (
-    <div className="w-64 bg-white shadow-lg">
+    <div className="w-64 bg-white shadow-lg" dir="rtl">
       <div className="flex h-16 items-center justify-center border-b">
-        <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+        <h1 className="text-xl font-bold text-gray-800">پنل مدیریت</h1>
       </div>
       <nav className="mt-5 px-2">
         {navigation.map((item) => {
@@ -56,7 +56,7 @@ export default function AdminSidebar() {
               }`}
             >
               <item.icon
-                className={`mr-4 h-6 w-6 flex-shrink-0 ${
+                className={`ml-4 h-6 w-6 flex-shrink-0 ${
                   isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
                 }`}
                 aria-hidden="true"

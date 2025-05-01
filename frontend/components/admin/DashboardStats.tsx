@@ -107,23 +107,23 @@ export default function DashboardStats() {
   // Generate stats list for rendering
   const statsList = [
     {
-      name: 'Total Revenue',
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      name: 'درآمد کل',
+      value: `${stats.totalRevenue.toLocaleString()} تومان`,
       icon: CurrencyDollarIcon,
     },
     {
-      name: 'Total Orders',
+      name: 'تعداد سفارش‌ها',
       value: stats.totalOrders.toLocaleString(),
       icon: ShoppingCartIcon,
     },
     {
-      name: 'Total Users',
+      name: 'تعداد کاربران',
       value: stats.totalUsers.toLocaleString(),
       icon: UsersIcon,
     },
     {
-      name: 'Average Order Value',
-      value: `$${stats.averageOrderValue.toLocaleString()}`,
+      name: 'میانگین ارزش سفارش',
+      value: `${stats.averageOrderValue.toLocaleString()} تومان`,
       icon: ChartBarIcon,
     },
   ];
@@ -140,11 +140,11 @@ export default function DashboardStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" dir="rtl">
       {error && (
         <div className="col-span-full mb-2">
           <p className="text-sm text-amber-600">
-            Using sample data due to API error
+            استفاده از داده‌های نمونه به دلیل خطای API
           </p>
         </div>
       )}
@@ -158,9 +158,9 @@ export default function DashboardStats() {
             <div className="absolute rounded-md bg-indigo-500 p-3">
               <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
             </div>
-            <p className="ml-16 truncate text-sm font-medium text-gray-500">{stat.name}</p>
+            <p className="mr-16 truncate text-sm font-medium text-gray-500">{stat.name}</p>
           </dt>
-          <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
+          <dd className="mr-16 flex items-baseline pb-6 sm:pb-7">
             <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
           </dd>
         </div>

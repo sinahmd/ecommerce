@@ -44,6 +44,24 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
+    
+    // Basic validation to ensure required fields exist
+    const name = formData.get('name');
+    const price = formData.get('price');
+    
+    if (!name) {
+      return NextResponse.json(
+        { error: "Product name is required" },
+        { status: 400 }
+      );
+    }
+    
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      return NextResponse.json(
+        { error: "Valid price is required" },
+        { status: 400 }
+      );
+    }
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/admin-panel/products/`,
@@ -57,8 +75,15 @@ export async function POST(request: Request) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create product");
+      // Handle different types of error responses
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || JSON.stringify(errorData));
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
     }
 
     const data = await response.json();

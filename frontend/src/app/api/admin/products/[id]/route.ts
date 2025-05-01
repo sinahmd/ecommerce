@@ -63,8 +63,14 @@ export async function PUT(
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to update product");
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || JSON.stringify(errorData));
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
     }
 
     const data = await response.json();

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, TrendingUp } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ProductList } from '@/components/product/ProductList';
 import { useCategories, useProducts } from '@/hooks/useProducts';
 
@@ -23,17 +23,17 @@ export default function HomePage() {
         <div className="container">
           <div className="rounded-xl bg-muted px-6 py-20 md:py-32 text-center">
             <div className="mx-auto max-w-3xl space-y-6">
-              <h1 className="text-4xl font-bold md:text-6xl">Discover Your Style</h1>
+              <h1 className="text-4xl font-bold md:text-6xl">استایل خود را پیدا کنید</h1>
               <p className="text-lg text-muted-foreground md:text-xl">
-                Explore our curated collection of the latest fashion trends and accessories.
+              مجموعه انتخاب شده ما از آخرین روندهای مد و لوازم جانبی را کاوش کنید
               </p>
               <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0 justify-center">
                 <Button asChild size="lg">
-                  <Link href="/products">Shop Now</Link>
+                  <Link href="/products">حالا خرید کنید</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/category/clothing">View Collections</Link>
-                </Button>
+                {/* <Button asChild variant="outline" size="lg">
+                  <Link href="/category/clothing">مشاهده محصولات</Link>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -43,9 +43,9 @@ export default function HomePage() {
       {/* Featured Categories */}
       <section className="container">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold md:text-3xl">Shop by Category</h2>
+          <h2 className="text-2xl font-bold md:text-3xl">خرید بر اساس دسته بندی</h2>
           <Link href="/categories" className="flex items-center text-primary hover:underline">
-            <span>All Categories</span>
+            <span>همه دسته بندی ها</span>
             <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
@@ -67,7 +67,7 @@ export default function HomePage() {
                   <span className="text-2xl font-semibold">{category.name}</span>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Button variant="secondary">Shop {category.name}</Button>
+                  <Button variant="secondary">خرید از {category.name}</Button>
                 </div>
               </Link>
             ))
@@ -75,39 +75,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trending Section */}
-      <section className="container">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold md:text-3xl">Trending Now</h2>
-          </div>
-          <Link href="/products" className="flex items-center text-primary hover:underline">
-            <span>View All</span>
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Link>
-        </div>
-        
-        {/* Product List Component - updated for pagination */}
-        {/* Pass directly fetched products to avoid pagination controls */}
-        <ProductList products={trendingProducts || []} />
-      </section>
-
       {/* Newsletter */}
       <section className="container">
         <div className="rounded-xl bg-muted p-8 md:p-12">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold md:text-3xl">Subscribe to our newsletter</h2>
+            <h2 className="text-2xl font-bold md:text-3xl">عضویت در خبرنامه</h2>
             <p className="mt-2 text-muted-foreground">
-              Get the latest updates on new products and upcoming sales.
+              دریافت اطلاع رسانی از جدیدترین محصولات و جشن های امروز
             </p>
             <div className="mt-6 flex max-w-md mx-auto">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="ایمیل خود را وارد کنید"
                 className="flex-1 rounded-l-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
-              <Button className="rounded-l-none">Subscribe</Button>
+              <Button className="rounded-l-none">عضویت</Button>
             </div>
           </div>
         </div>

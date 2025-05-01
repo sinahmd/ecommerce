@@ -13,7 +13,8 @@ interface OrderDetails {
   id: number;
   order_number: string;
   status: string;
-  total_amount: number;
+  total_amount?: number;
+  total_price?: number;
   created_at: string;
 }
 
@@ -27,7 +28,7 @@ function SuccessPageContent() {
 
   useEffect(() => {
     if (!orderId) {
-      setError('No order ID found');
+      setError('شناسه سفارش یافت نشد');
       setLoading(false);
       return;
     }
@@ -38,7 +39,7 @@ function SuccessPageContent() {
         setOrderDetails(response.data);
       } catch (err) {
         console.error('Error fetching order details:', err);
-        setError('Could not fetch order details');
+        setError('خطا در دریافت اطلاعات سفارش');
       } finally {
         setLoading(false);
       }
@@ -54,12 +55,12 @@ function SuccessPageContent() {
   }, []);
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10" dir="rtl">
       <div className="max-w-lg mx-auto">
         <Card>
           <CardHeader className="text-center">
             <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <CardTitle className="text-2xl">Payment Successful!</CardTitle>
+            <CardTitle className="text-2xl">پرداخت موفقیت‌آمیز!</CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-4">
@@ -74,41 +75,46 @@ function SuccessPageContent() {
             ) : orderDetails ? (
               <div className="space-y-3">
                 <p className="text-center text-muted-foreground">
-                  Your order has been successfully placed and will be on its way soon!
+                  سفارش شما با موفقیت ثبت شد و به زودی ارسال خواهد شد!
                 </p>
                 
                 <div className="bg-muted p-4 rounded-md mt-6">
                   <div className="flex justify-between py-1">
-                    <span className="font-medium">Order Number:</span>
+                    <span className="font-medium">شماره سفارش:</span>
                     <span>{orderDetails.order_number}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="font-medium">Date:</span>
-                    <span>{new Date(orderDetails.created_at).toLocaleDateString()}</span>
+                    <span className="font-medium">تاریخ:</span>
+                    <span>{new Date(orderDetails.created_at).toLocaleDateString('fa-IR')}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="font-medium">Total Amount:</span>
-                    <span>{orderDetails.total_amount} IRR</span>
+                    <span className="font-medium">مبلغ کل:</span>
+                    <span>{orderDetails.total_amount ? orderDetails.total_amount.toLocaleString() : 
+                           orderDetails.total_price ? orderDetails.total_price.toLocaleString() : '0'} تومان</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="font-medium">Status:</span>
-                    <span className="capitalize">{orderDetails.status}</span>
+                    <span className="font-medium">وضعیت:</span>
+                    <span>{orderDetails.status === 'pending' ? 'در انتظار پرداخت' : 
+                           orderDetails.status === 'processing' ? 'در حال پردازش' :
+                           orderDetails.status === 'shipped' ? 'ارسال شده' :
+                           orderDetails.status === 'delivered' ? 'تحویل داده شده' :
+                           orderDetails.status}</span>
                   </div>
                 </div>
               </div>
             ) : (
               <p className="text-center text-muted-foreground">
-                Thank you for your purchase! Your order has been received.
+                با تشکر از خرید شما! سفارش شما دریافت شد.
               </p>
             )}
           </CardContent>
           
           <CardFooter className="flex flex-col gap-2">
             <Link href="/account/orders" className="w-full">
-              <Button className="w-full">View My Orders</Button>
+              <Button className="w-full">مشاهده سفارش‌های من</Button>
             </Link>
             <Link href="/products" className="w-full">
-              <Button variant="outline" className="w-full">Continue Shopping</Button>
+              <Button variant="outline" className="w-full">ادامه خرید</Button>
             </Link>
           </CardFooter>
         </Card>
@@ -120,9 +126,9 @@ function SuccessPageContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="container mx-auto py-20 flex flex-col items-center justify-center">
+      <div className="container mx-auto py-20 flex flex-col items-center justify-center" dir="rtl">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        <p className="mt-4">Loading order details...</p>
+        <p className="mt-4">در حال بارگیری اطلاعات سفارش...</p>
       </div>
     }>
       <SuccessPageContent />

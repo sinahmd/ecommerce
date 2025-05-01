@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
+import uuid
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -46,8 +47,14 @@ class Product(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if not self.slug and self.name:  # If slug is empty but name exists
             self.slug = slugify(self.name)
+        
+        # Handle case where name might be empty too
+        if not self.slug:
+            # Generate a random string or use the product ID
+            self.slug = str(uuid.uuid4())[:8]
+        
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):

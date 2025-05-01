@@ -102,7 +102,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
             className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to all products
+            بازگشت به همه محصولات
           </Link>
         </div>
 

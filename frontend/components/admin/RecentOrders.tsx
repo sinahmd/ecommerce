@@ -22,30 +22,30 @@ const statusColors = {
 const MOCK_ORDERS: Order[] = [
   {
     id: 1001,
-    customerName: 'John Doe',
+    customerName: 'علی محمدی',
     date: '2023-06-15T12:00:00Z',
-    total: 125.99,
+    total: 1250000,
     status: 'completed'
   },
   {
     id: 1002,
-    customerName: 'Jane Smith',
+    customerName: 'مریم حسینی',
     date: '2023-06-16T10:30:00Z',
-    total: 85.50,
+    total: 850000,
     status: 'processing'
   },
   {
     id: 1003,
-    customerName: 'Robert Johnson',
+    customerName: 'رضا کریمی',
     date: '2023-06-16T15:45:00Z',
-    total: 220.75,
+    total: 2200000,
     status: 'pending'
   },
   {
     id: 1004,
-    customerName: 'Sarah Williams',
+    customerName: 'سارا احمدی',
     date: '2023-06-14T09:15:00Z',
-    total: 65.25,
+    total: 650000,
     status: 'cancelled'
   }
 ];
@@ -115,34 +115,44 @@ export default function RecentOrders() {
     );
   }
 
+  const getStatusInPersian = (status: string): string => {
+    switch (status) {
+      case 'pending': return 'در انتظار';
+      case 'processing': return 'در حال پردازش';
+      case 'completed': return 'تکمیل شده';
+      case 'cancelled': return 'لغو شده';
+      default: return status;
+    }
+  };
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" dir="rtl">
       {error && (
         <p className="text-sm text-amber-600 mb-4">
-          Using sample data due to API error
+          استفاده از داده‌های نمونه به دلیل خطای API
         </p>
       )}
       
       {orders.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">No recent orders found</p>
+        <p className="text-gray-500 text-center py-4">سفارش اخیری یافت نشد</p>
       ) : (
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Order ID
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                شناسه سفارش
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Customer
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                مشتری
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                تاریخ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                مجموع
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                وضعیت
               </th>
             </tr>
           </thead>
@@ -156,14 +166,14 @@ export default function RecentOrders() {
                   {order.customerName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(order.date).toLocaleDateString()}
+                  {new Date(order.date).toLocaleDateString('fa-IR')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ${order.total.toLocaleString()}
+                  {order.total.toLocaleString()} تومان
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[order.status]}`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    {getStatusInPersian(order.status)}
                   </span>
                 </td>
               </tr>
@@ -173,4 +183,4 @@ export default function RecentOrders() {
       )}
     </div>
   );
-} // End of RecentOrders component
+}

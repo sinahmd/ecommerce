@@ -40,7 +40,6 @@ export default function SearchPage() {
     minPrice: priceRange[0],
     maxPrice: priceRange[1],
     page: currentPage,
-    limit: 12
   });
   
   const handleSearch = (e: React.FormEvent) => {
@@ -60,7 +59,7 @@ export default function SearchPage() {
         <h1 className="text-3xl font-bold">
           {currentQuery 
             ? `Search results for "${currentQuery}"`
-            : 'All Products'
+            : 'همه محصولات'
           }
         </h1>
         
@@ -147,7 +146,7 @@ export default function SearchPage() {
               </div>
             ))}
           </div>
-        ) : products?.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="text-center py-16">
             <h2 className="text-xl font-medium mb-2">No products found</h2>
             <p className="text-muted-foreground mb-6">
@@ -166,7 +165,7 @@ export default function SearchPage() {
         ) : (
           <div>
             <p className="text-muted-foreground mb-6">
-              {products?.length} {products?.length === 1 ? 'product' : 'products'} found
+              {products.length} {products.length === 1 ? 'product' : 'products'} found
             </p>
             <ProductList products={products} />
             

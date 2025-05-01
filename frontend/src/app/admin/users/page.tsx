@@ -26,7 +26,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/admin/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
+      if (!response.ok) throw new Error('خطا در دریافت کاربران');
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -35,7 +35,7 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm('آیا از حذف این کاربر اطمینان دارید؟')) return;
     
     try {
       const response = await fetch(`/api/admin/users/${id}`, {
@@ -44,23 +44,23 @@ export default function UsersPage() {
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete user');
+        throw new Error(error.error || 'خطا در حذف کاربر');
       }
       
       setUsers(users.filter(user => user.id !== id));
     } catch (error) {
       console.error('Error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete user');
+      alert(error instanceof Error ? error.message : 'خطا در حذف کاربر');
     }
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
+    <div className="px-4 sm:px-6 lg:px-8" dir="rtl">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-xl font-semibold text-gray-900">Users</h1>
+          <h1 className="text-xl font-semibold text-gray-900">مدیریت کاربران</h1>
           <p className="mt-2 text-sm text-gray-700">
-            A list of all users in your store including their details and order count.
+            لیست تمام کاربران فروشگاه شما شامل جزئیات و تعداد سفارشات آنها.
           </p>
         </div>
       </div>
@@ -71,33 +71,33 @@ export default function UsersPage() {
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Name
+                    <th scope="col" className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-6">
+                      نام
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Email
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      ایمیل
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Status
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      وضعیت
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Role
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      نقش
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Orders
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      سفارشات
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Joined
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      تاریخ عضویت
                     </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                      <span className="sr-only">Actions</span>
+                    <th scope="col" className="relative py-3.5 pr-3 pl-4 sm:pl-6">
+                      <span className="sr-only">عملیات</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {users.map((user) => (
                     <tr key={user.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                      <td className="whitespace-nowrap py-4 pr-4 pl-3 text-sm sm:pr-6">
                         <div className="font-medium text-gray-900">
                           {user.first_name} {user.last_name}
                         </div>
@@ -113,22 +113,22 @@ export default function UsersPage() {
                               : 'bg-red-100 text-red-800'
                           }`}
                         >
-                          {user.is_active ? 'Active' : 'Inactive'}
+                          {user.is_active ? 'فعال' : 'غیرفعال'}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {user.is_staff ? 'Admin' : 'Customer'}
+                        {user.is_staff ? 'مدیر' : 'مشتری'}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {user.orders_count}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {new Date(user.date_joined).toLocaleDateString()}
+                        {new Date(user.date_joined).toLocaleDateString('fa-IR')}
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <td className="relative whitespace-nowrap py-4 pr-3 pl-4 text-left text-sm font-medium sm:pl-6">
                         <button
                           onClick={() => router.push(`/admin/users/${user.id}`)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                          className="text-indigo-600 hover:text-indigo-900 ml-4"
                         >
                           <PencilIcon className="h-5 w-5" aria-hidden="true" />
                         </button>

@@ -37,7 +37,6 @@ export function ProductList({ products, limit, categorySlug }: ProductListProps)
   
   // Prevent hydration issues
   const [mounted, setMounted] = useState(false);
-  const initialRender = useRef(true);
   
   // Handle client-side hydration issues
   useEffect(() => {
@@ -64,7 +63,7 @@ export function ProductList({ products, limit, categorySlug }: ProductListProps)
     totalPages: categoryTotalPages,
     currentPage: categoryCurrPage,
     pageSize: categoryPageSize,
-    totalItems: categoryTotalItems,
+    totalItems: categoryTotalItems
   } = useCategoryProducts(categorySlug || '', {
     params: queryParams,
     skip: !mounted || !categorySlug || !!products
@@ -172,6 +171,12 @@ export function ProductList({ products, limit, categorySlug }: ProductListProps)
     );
   }
 
+  console.log("Pagination data:", {
+    totalPages: paginationProps.totalPages,
+    currentPage: paginationProps.currentPage,
+    products: displayProducts.length
+  });
+
   return (
     <div className="space-y-8">
       {/* Search and sort controls */}
@@ -273,12 +278,16 @@ export function ProductList({ products, limit, categorySlug }: ProductListProps)
             })}
           </div>
           
-          {/* Pagination controls */}
-          {paginationProps.totalPages > 1 && (
-            <Pagination 
-              {...paginationProps}
-              className="mt-8"
-            />
+          {/* Pagination */}
+          {displayProducts.length > 0 && (
+            <div className="mt-12">
+              <Pagination 
+                totalPages={paginationProps.totalPages}
+                currentPage={paginationProps.currentPage}
+                pageSize={paginationProps.pageSize}
+                totalItems={paginationProps.totalItems}
+              />
+            </div>
           )}
         </div>
       )}

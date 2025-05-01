@@ -9,20 +9,20 @@ import Link from 'next/link';
 
 function FailedPageContent() {
   const searchParams = useSearchParams();
-  const errorMessage = searchParams.get('error') || 'Your payment could not be processed';
+  const errorMessage = searchParams.get('error') || 'پرداخت شما با خطا مواجه شد';
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10" dir="rtl">
       <div className="max-w-lg mx-auto">
         <Card>
           <CardHeader className="text-center">
             <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
-            <CardTitle className="text-2xl">Payment Failed</CardTitle>
+            <CardTitle className="text-2xl">خطا در پرداخت</CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-4">
             <p className="text-center text-muted-foreground">
-              We are sorry, but there was an issue processing your payment.
+              متاسفیم، مشکلی در پردازش پرداخت شما رخ داده است.
             </p>
             
             <div className="bg-destructive/10 text-destructive p-4 rounded-md mt-6">
@@ -30,19 +30,19 @@ function FailedPageContent() {
             </div>
             
             <p className="text-center text-sm mt-4">
-              Your card has not been charged. Please try again or use a different payment method.
+              کارت شما شارژ نشده است. لطفاً دوباره تلاش کنید یا از روش پرداخت دیگری استفاده کنید.
             </p>
           </CardContent>
           
           <CardFooter className="flex flex-col gap-2">
             <Link href="/checkout" className="w-full">
-              <Button className="w-full">Try Again</Button>
+              <Button className="w-full">تلاش مجدد</Button>
             </Link>
             <Link href="/cart" className="w-full">
-              <Button variant="outline" className="w-full">Return to Cart</Button>
+              <Button variant="outline" className="w-full">بازگشت به سبد خرید</Button>
             </Link>
             <Link href="/products" className="w-full">
-              <Button variant="ghost" className="w-full">Continue Shopping</Button>
+              <Button variant="ghost" className="w-full">ادامه خرید</Button>
             </Link>
           </CardFooter>
         </Card>
@@ -54,9 +54,9 @@ function FailedPageContent() {
 export default function FailedPage() {
   return (
     <Suspense fallback={
-      <div className="container mx-auto py-20 flex flex-col items-center justify-center">
+      <div className="container mx-auto py-20 flex flex-col items-center justify-center" dir="rtl">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        <p className="mt-4">Loading...</p>
+        <p className="mt-4">در حال بارگیری...</p>
       </div>
     }>
       <FailedPageContent />

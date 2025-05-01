@@ -22,20 +22,20 @@ export default function ProductFilters({ categories, selectedCategory }: Product
 
   return (
     <div>
-      <h3 className="font-semibold mb-4">Categories</h3>
+      <h3 className="font-semibold mb-4">دسته‌بندی‌ها</h3>
       <div className="space-y-2">
         <button
-          className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent ${
+          className={`w-full text-right px-3 py-2 rounded-md hover:bg-accent ${
             selectedCategory === null ? 'bg-accent text-accent-foreground' : ''
           }`}
           onClick={() => handleCategoryChange(null)}
         >
-          All Products
+          همه محصولات
         </button>
         {categories?.map((category) => (
           <button
             key={category.slug}
-            className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent ${
+            className={`w-full text-right px-3 py-2 rounded-md hover:bg-accent ${
               selectedCategory === category.slug
                 ? 'bg-accent text-accent-foreground'
                 : ''

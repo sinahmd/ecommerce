@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Product } from "@/types/product";
 import { UseApiOptions } from "./useApi";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+import api from "@/lib/api";
 
 export interface Category {
   id: number;
@@ -60,11 +62,6 @@ export function useProducts(
   params: UseProductsParams = {},
   options: UseApiOptions = {}
 ): UseProductsResult {
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(params.page || 1);
-  const [pageSize, setPageSize] = useState<number>(params.page_size || 8);
-  const [totalItems, setTotalItems] = useState(0);
-
   // Convert params to API query parameters
   const queryParams: Record<string, string | number | undefined> = {
     search: params.search,
@@ -80,50 +77,25 @@ export function useProducts(
     Object.entries(queryParams).filter(([, v]) => v !== undefined)
   );
 
-  // Use the useApi hook with proper type
-  const { data, isLoading, error, fetchData } = useApi<ProductListResponse>(
-    endpoints.products.list().url,
-    {
-      immediate: false,
-      ...options
-    }
-  );
+  // Use React Query instead of useApi
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', filteredParams],
+    queryFn: async () => {
+      const response = await api.get<ProductListResponse>(
+        endpoints.products.list().url,
+        { params: filteredParams }
+      );
+      return response.data;
+    },
+    enabled: !options.skip // Only run if not skipped
+  });
 
-  // Fetch data when component mounts or params change
-  useEffect(() => {
-    if (!options.skip) {
-      fetchData({ params: filteredParams });
-    }
-  }, [
-    fetchData,
-    params.search,
-    params.sortBy,
-    params.minPrice,
-    params.maxPrice,
-    params.page,
-    params.page_size,
-    options.skip
-  ]);
-
-  // Add debug logging
-  useEffect(() => {
-    if (data) {
-      console.log("useProducts API response:", data);
-    }
-  }, [data]);
-
-  // Extract and normalize products from the response data
+  // Extract values from the query result
   const products = data?.products || [];
-
-  // Update pagination information when data changes
-  useEffect(() => {
-    if (data) {
-      setTotalPages(data.total_pages || 1);
-      setCurrentPage(data.current_page || 1);
-      setPageSize(data.page_size || 8);
-      setTotalItems(data.total_items || 0);
-    }
-  }, [data]);
+  const totalPages = data?.total_pages || 1;
+  const currentPage = data?.current_page || (params.page || 1);
+  const pageSize = data?.page_size || (params.page_size || 8);
+  const totalItems = data?.total_items || 0;
 
   return {
     products,
@@ -136,31 +108,45 @@ export function useProducts(
   };
 }
 
-export function useProduct(id: number, options = {}) {
-  const { data, isLoading, error, fetchData } = useApi<Product>(
-    endpoints.products.detail(id).url,
-    options
-  );
+export function useProduct(id: number, options: UseApiOptions = {}) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const response = await api.get<Product>(endpoints.products.detail(id).url);
+      return response.data;
+    },
+    enabled: !!id && !options.skip // Only run if id exists and not skipped
+  });
 
   return {
     product: data,
     isLoading,
     error,
-    fetchProduct: fetchData
+    fetchProduct: async () => {
+      // This is to maintain API compatibility with the old hook
+      return api.get<Product>(endpoints.products.detail(id).url);
+    }
   };
 }
 
-export function useCategories(options = {}) {
-  const { data, isLoading, error, fetchData } = useApi<Category[]>(
-    endpoints.products.categories.url,
-    options
-  );
+export function useCategories(options: UseApiOptions = {}) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await api.get<Category[]>(endpoints.products.categories.url);
+      return response.data;
+    },
+    enabled: !options.skip // Only run if not skipped
+  });
 
   return {
     categories: data || [],
     isLoading,
     error,
-    fetchCategories: fetchData
+    fetchCategories: async () => {
+      // This is to maintain API compatibility with the old hook
+      return api.get<Category[]>(endpoints.products.categories.url);
+    }
   };
 }
 
@@ -168,25 +154,7 @@ export function useCategoryProducts(
   slug: string,
   options: { params?: UseProductsParams; skip?: boolean } = {}
 ): CategoryProductsResult {
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(options.params?.page || 1);
-  const [pageSize, setPageSize] = useState<number>(
-    options.params?.page_size || 8
-  );
-  const [totalItems, setTotalItems] = useState(0);
-
-  // Stabilize params by using a ref
-  const optionsRef = useRef(options);
-  const slugRef = useRef(slug);
-  const prevFetchRef = useRef<string>(''); // Track previous fetch params
-
-  // Update refs when props change
-  useEffect(() => {
-    optionsRef.current = options;
-    slugRef.current = slug;
-  }, [options, slug]);
-
-  // Convert params to API query parameters - do this only once
+  // Convert params to API query parameters
   const queryParams = useMemo(() => {
     const params: Record<string, string | number | undefined> = {
       search: options.params?.search,
@@ -215,45 +183,54 @@ export function useCategoryProducts(
     ? endpoints.products.category(slug).url
     : endpoints.products.list().url;
 
-  const { data, isLoading, error, fetchData } =
-    useApi<CategoryProductsResponse>(apiUrl, {
-      immediate: false,
-      skip: options.skip || false
-    });
-
-  // Fetch data when component mounts or params change
+  // Add debugging for the request parameters
   useEffect(() => {
-    if (!options.skip && slug) {
-      // Create a unique string to represent this fetch request
-      const fetchKey = `${slug}-${JSON.stringify(queryParams)}`;
-      
-      // Only fetch if params have changed to prevent redundant calls
-      if (prevFetchRef.current !== fetchKey) {
-        console.log("Fetching category products for slug:", slug, "with params:", queryParams);
-        fetchData({ params: queryParams });
-        prevFetchRef.current = fetchKey;
-      }
+    if (slug && !options.skip) {
+      console.log("Category request parameters:", {
+        slug,
+        queryParams,
+        url: apiUrl
+      });
     }
-  }, [fetchData, options.skip, slug, queryParams]);
+  }, [slug, queryParams, apiUrl, options.skip]);
 
-  // Extract and normalize products from the response data
+  // Use React Query instead of useApi
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['categoryProducts', slug, queryParams],
+    queryFn: async () => {
+      console.log(`Making request to ${apiUrl} with params:`, queryParams);
+      const response = await api.get<CategoryProductsResponse>(
+        apiUrl,
+        { params: queryParams }
+      );
+      // Log the response for debugging
+      console.log("Category API response:", response.data);
+      return response.data;
+    },
+    enabled: !!slug && !options.skip // Only run if slug exists and not skipped
+  });
+
+  // Extract values from the query result
   const products = data?.products || [];
-
-  // Update pagination information when data changes
-  useEffect(() => {
-    if (data) {
-      setTotalPages(data.total_pages || 1);
-      setCurrentPage(data.current_page || 1);
-      setPageSize(data.page_size || 8);
-      setTotalItems(data.total_items || 0);
-    }
-  }, [data]);
+  const totalPages = data?.total_pages || 1;
+  const currentPage = data?.current_page || (options.params?.page || 1);
+  const pageSize = data?.page_size || (options.params?.page_size || 8);
+  const totalItems = data?.total_items || 0;
 
   return {
     products,
     isLoading,
     error: error as Error | null,
-    fetchCategoryProducts: fetchData,
+    fetchCategoryProducts: async (config) => {
+      // This is to maintain API compatibility with the old hook
+      return api.get<CategoryProductsResponse>(apiUrl, {
+        ...config,
+        params: {
+          ...config?.params,
+          ...queryParams
+        }
+      });
+    },
     totalPages,
     currentPage,
     pageSize,

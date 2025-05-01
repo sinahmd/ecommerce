@@ -32,7 +32,7 @@ export default function BlogManagementPage() {
         setPosts(data?.posts ?? []);
       } catch (err) {
         console.error('Error fetching blog posts:', err);
-        setError('Failed to load blog posts');
+        setError('خطا در بارگیری پست‌های وبلاگ');
       } finally {
         setIsLoading(false);
       }
@@ -42,10 +42,10 @@ export default function BlogManagementPage() {
   }, []);
   
   return (
-    <div className="p-6">
+    <div className="p-6" dir="rtl">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold">Blog Management</h1>
-        <p className="text-gray-500">Create, edit, and manage your blog posts.</p>
+        <h1 className="text-2xl font-bold">مدیریت وبلاگ</h1>
+        <p className="text-gray-500">ایجاد، ویرایش و مدیریت پست‌های وبلاگ.</p>
       </header>
 
       {/* <div className="mb-8">
@@ -55,8 +55,8 @@ export default function BlogManagementPage() {
       <div className="flex justify-between items-center mb-6">
         <Link href="/admin/blog/create">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Post
+            <Plus className="h-4 w-4 ml-2" />
+            ایجاد پست جدید
           </Button>
         </Link>
       </div>
@@ -74,70 +74,74 @@ export default function BlogManagementPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Published</TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>عنوان</TableHead>
+                <TableHead>منتشر شده</TableHead>
+                <TableHead>برچسب‌ها</TableHead>
+                <TableHead>تاریخ ایجاد</TableHead>
+                <TableHead>تاریخ بروزرسانی</TableHead>
+                <TableHead className="text-left">عملیات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {posts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
-                    No blog posts found. Create your first post!
+                    هیچ پست وبلاگی یافت نشد. اولین پست خود را ایجاد کنید!
                   </TableCell>
                 </TableRow>
               ) : (
                 posts.map((post) => (
                   <TableRow key={post.id}>
-                    <TableCell className="font-medium">{post.title}</TableCell>
+                    <TableCell className="font-medium">
+                      {post.title}
+                    </TableCell>
                     <TableCell>
                       {post.is_published ? (
-                        <Badge className="bg-green-500">Published</Badge>
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                          منتشر شده
+                        </Badge>
                       ) : (
-                        <Badge variant="outline">Draft</Badge>
+                        <Badge variant="outline" className="text-yellow-800">
+                          پیش‌نویس
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <Badge variant="secondary" key={tag.id} className="text-xs">
-                            {tag.name}
+                        {post.tags && post.tags.length > 0 ? post.tags.map((tag) => (
+                          <Badge key={String(tag)} variant="secondary" className="text-xs">
+                            {String(tag)}
                           </Badge>
-                        ))}
-                        {post.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{post.tags.length - 3}
-                          </Badge>
+                        )) : null}
+                        {(!post.tags || post.tags.length === 0) && (
+                          <span className="text-gray-400 text-xs">بدون برچسب</span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-500 text-sm">
-                      {format(new Date(post.created_at), 'MMM d, yyyy')}
+                    <TableCell>
+                      {post.created_at ? format(new Date(post.created_at), 'yyyy/MM/dd') : ''}
                     </TableCell>
-                    <TableCell className="text-gray-500 text-sm">
-                      {format(new Date(post.updated_at), 'MMM d, yyyy')}
+                    <TableCell>
+                      {post.updated_at ? format(new Date(post.updated_at), 'yyyy/MM/dd') : ''}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-left">
+                      <div className="flex justify-start gap-2">
                         <Link href={`/blog/${post.slug}`} target="_blank">
                           <Button size="sm" variant="outline">
                             <Eye className="h-4 w-4" />
-                            <span className="sr-only">Preview</span>
+                            <span className="sr-only">پیش‌نمایش</span>
                           </Button>
                         </Link>
                         <Link href={`/admin/blog/edit/${post.slug}`}>
                           <Button size="sm" variant="outline">
                             <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
+                            <span className="sr-only">ویرایش</span>
                           </Button>
                         </Link>
                         <Link href={`/admin/blog/delete/${post.slug}`}>
                           <Button size="sm" variant="destructive">
                             <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
+                            <span className="sr-only">حذف</span>
                           </Button>
                         </Link>
                       </div>

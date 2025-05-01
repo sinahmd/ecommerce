@@ -1,6 +1,5 @@
 "use client";
 
-
 import dynamic from 'next/dynamic';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
@@ -52,50 +51,26 @@ export default function AdminDashboard() {
   }
 
   return (
-  //   <div className="space-y-6">
-  //     <h1 className="text-2xl font-semibold text-gray-900">Dashboard Overview</h1>
-      
-  //     <DashboardStats />
-
-  //     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  //       <div className="bg-white p-6 rounded-lg shadow">
-  //         <h2 className="text-lg font-medium text-gray-900 mb-4">Sales Overview</h2>
-  //         <SalesChart />
-  //       </div>
-
-  //       <div className="bg-white p-6 rounded-lg shadow">
-  //         <h2 className="text-lg font-medium text-gray-900 mb-4">Top Selling Products</h2>
-  //         <TopProducts />
-  //       </div>
-  //     </div>
-
-  //     <div className="bg-white p-6 rounded-lg shadow">
-  //       <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Orders</h2>
-  //       <RecentOrders />
-  //     </div>
-  //   </div>
-  // );
-
     <ProtectedRoute requireAdmin>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard Overview</h1>
+      <div className="space-y-6" dir="rtl">
+        <h1 className="text-2xl font-semibold text-gray-900">نمای کلی داشبورد</h1>
         
         <DashboardStats />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Sales Overview</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">نمای کلی فروش</h2>
             <SalesChart />
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Top Selling Products</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">محصولات پرفروش</h2>
             <TopProducts />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Orders</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">سفارش‌های اخیر</h2>
           <RecentOrders />
         </div>
       </div>

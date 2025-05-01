@@ -38,8 +38,8 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
 
     if (currentQuantity >= (product.stock || 0)) {
       toast({
-        title: "Out of Stock",
-        description: "Sorry, this product is out of stock.",
+        title: "موجود نیست",
+        description: "متاسفانه این محصول موجود نیست",
         variant: "destructive",
       });
       return;
@@ -56,13 +56,13 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
         images: [getFullImageUrl(product.image)]
       });
       toast({
-        title: "Added to Cart",
-        description: `${product.name} has been added to your cart.`,
+        title: "به سبد خرید اضافه شد",
+        description: `${product.name} به سبد خرید شما اضاقه شد`,
       });
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to add product to cart.",
+        title: "حطا",
+        description: "متاسفانه خطایی رخ داده است",
         variant: "destructive",
       });
     } finally {
@@ -73,7 +73,7 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
   return (
     <div className="pt-6 space-y-4">
       <div className="flex items-center">
-        <span className="mr-4">Quantity:</span>
+        <span className="mr-4">مقدار:</span>
         <div className="flex items-center">
           <Button 
             variant="outline" 
@@ -83,7 +83,7 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
             disabled={quantity <= 1}
           >
             <Minus className="h-4 w-4" />
-            <span className="sr-only">Decrease quantity</span>
+            <span className="sr-only">کاهش مقدار</span>
           </Button>
           <div className="h-10 w-12 border border-x-0 flex items-center justify-center">
             {quantity}
@@ -96,7 +96,7 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
             disabled={quantity >= maxQuantity}
           >
             <Plus className="h-4 w-4" />
-            <span className="sr-only">Increase quantity</span>
+            <span className="sr-only">افزایش مقدار</span>
           </Button>
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function ProductAddToCart({ product }: ProductAddToCartProps) {
         disabled={isAddingToCart || currentQuantity >= (product.stock || 0)}
       >
         <ShoppingCart className="mr-2 h-5 w-5" />
-        {isAddingToCart ? "Adding to Cart..." : currentQuantity >= (product.stock || 0) ? "Out of Stock" : "Add to Cart"}
+        {isAddingToCart ? "در حال اضافه کردن به سبد خرید..." : currentQuantity >= (product.stock || 0) ? "موجود نیست" : "اضافه به سبد خرید"}
       </Button>
     </div>
   );

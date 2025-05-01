@@ -40,7 +40,13 @@ export default function DeleteConfirmationDialog({
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to delete ${itemType}`);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || JSON.stringify(errorData));
+        } else {
+          throw new Error(`Failed to delete ${itemType}: ${response.status}`);
+        }
       }
 
       toast({

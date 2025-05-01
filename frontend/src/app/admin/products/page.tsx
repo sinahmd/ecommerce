@@ -58,8 +58,8 @@ export default function ProductsPage() {
     } catch (error: unknown) {
       console.error('Error:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch products",
+        title: "خطا",
+        description: "دریافت محصولات با مشکل مواجه شد",
         variant: "destructive",
       });
     } finally {
@@ -119,16 +119,16 @@ export default function ProductsPage() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-96">Loading...</div>;
+    return <div className="flex justify-center items-center h-96">در حال بارگذاری...</div>;
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6" dir="rtl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <h1 className="text-2xl font-bold">محصولات</h1>
         <Button onClick={() => setIsAddModalOpen(true)}>
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Product
+          <PlusIcon className="h-5 w-5 ml-2" />
+          افزودن محصول
         </Button>
       </div>
 
@@ -136,13 +136,13 @@ export default function ProductsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تصویر</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">دسته‌بندی‌ها</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">قیمت</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">موجودی</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -160,7 +160,7 @@ export default function ProductsPage() {
                     </div>
                   ) : (
                     <div className="h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center">
-                      <span className="text-gray-400">No image</span>
+                      <span className="text-gray-400">بدون تصویر</span>
                     </div>
                   )}
                 </td>
@@ -179,15 +179,15 @@ export default function ProductsPage() {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-400">No categories</span>
+                      <span className="text-gray-400">بدون دسته‌بندی</span>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">${product.price}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{product.price.toLocaleString()} تومان</td>
                 <td className="px-6 py-4 whitespace-nowrap">{product.stock}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.available ? 'Available' : 'Unavailable'}
+                    {product.available ? 'موجود' : 'ناموجود'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

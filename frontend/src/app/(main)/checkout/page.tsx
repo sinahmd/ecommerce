@@ -71,8 +71,8 @@ export default function CheckoutPage() {
     
     if (cartItems.length === 0) {
       toast({
-        title: 'Empty Cart',
-        description: 'Your cart is empty. Please add items before checkout.',
+        title: 'سبد خرید خالی',
+        description: 'سبد خرید شما خالی است. لطفا محصولاتی را به سبد خرید خود اضافه کنید.',
         variant: 'destructive',
       });
       return;
@@ -109,8 +109,8 @@ export default function CheckoutPage() {
     } catch (error: unknown) {
       console.error('Checkout error:', error);
       toast({
-        title: 'Checkout Failed',
-        description: 'An error occurred during checkout',
+        title: 'خطا در تکمیل خرید',
+        description: 'خطایی در فرآیند تکمیل خرید رخ داده است',
         variant: 'destructive',
       });
       
@@ -121,16 +121,16 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+    <div className="container mx-auto py-10" dir="rtl">
+      <h1 className="text-3xl font-bold mb-8">تکمیل خرید</h1>
       
       {cartItems.length === 0 ? (
         <Card className="max-w-md mx-auto">
           <CardContent className="pt-6 text-center">
             <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground mb-4">Your cart is empty</p>
+            <p className="text-muted-foreground mb-4">سبد خرید شما خالی است</p>
             <Button onClick={() => router.push('/products')}>
-              Browse Products
+              مشاهده محصولات
             </Button>
           </CardContent>
         </Card>
@@ -140,12 +140,12 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmit}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Shipping Details</CardTitle>
+                  <CardTitle>اطلاعات ارسال</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">نام</Label>
                       <Input 
                         id="firstName" 
                         name="firstName"
@@ -155,7 +155,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">نام خانوادگی</Label>
                       <Input 
                         id="lastName" 
                         name="lastName"
@@ -167,7 +167,7 @@ export default function CheckoutPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">ایمیل</Label>
                     <Input 
                       id="email" 
                       name="email"
@@ -179,7 +179,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">شماره تماس</Label>
                     <Input 
                       id="phone" 
                       name="phone"
@@ -191,7 +191,7 @@ export default function CheckoutPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">آدرس</Label>
                     <Input 
                       id="address" 
                       name="address"
@@ -204,7 +204,7 @@ export default function CheckoutPage() {
                 
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={submitting}>
-                    {submitting ? 'Processing...' : `Pay ${getTotalPrice().toLocaleString()} IRR`}
+                    {submitting ? 'در حال پردازش...' : `پرداخت ${getTotalPrice().toLocaleString()} تومان`}
                   </Button>
                 </CardFooter>
               </Card>
@@ -214,31 +214,31 @@ export default function CheckoutPage() {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>خلاصه سفارش</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {cartItems.map(item => (
                   <div key={item.id} className="flex justify-between">
                     <div>
                       <p className="font-medium">{item.product.name}</p>
-                      <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                      <p className="text-sm text-muted-foreground">تعداد: {item.quantity}</p>
                     </div>
-                    <p>{item.total_price.toLocaleString()} IRR</p>
+                    <p>{item.total_price.toLocaleString()} تومان</p>
                   </div>
                 ))}
                 
                 <div className="pt-4 border-t">
                   <div className="flex justify-between text-sm">
-                    <span>Subtotal</span>
-                    <span>{getTotalPrice().toLocaleString()} IRR</span>
+                    <span>جمع فرعی</span>
+                    <span>{getTotalPrice().toLocaleString()} تومان</span>
                   </div>
                   <div className="flex justify-between text-sm mt-2">
-                    <span>Shipping</span>
-                    <span>Free</span>
+                    <span>هزینه ارسال</span>
+                    <span>رایگان</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg mt-4">
-                    <span>Total</span>
-                    <span>{getTotalPrice().toLocaleString()} IRR</span>
+                    <span>مجموع</span>
+                    <span>{getTotalPrice().toLocaleString()} تومان</span>
                   </div>
                 </div>
               </CardContent>

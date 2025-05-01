@@ -44,7 +44,7 @@ export default async function ProductsPage({
     '@type': 'CollectionPage',
     name: selectedCategory 
       ? categories?.find((c: {slug: string}) => c.slug === selectedCategory)?.name + ' Products' 
-      : 'All Products',
+      : 'همه محصولات',
     description: 'Browse our latest collection of high-quality products.',
     url: `${process.env.NEXT_PUBLIC_SITE_URL}/products`,
   };
@@ -58,7 +58,7 @@ export default async function ProductsPage({
       />
       
       <div className="container py-12">
-        <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex flex-col md:just-flex-row gap-8">
           {/* Sidebar/Filter */}
           <div className="w-full md:w-64 shrink-0">
             <div className="sticky top-24 space-y-8">
@@ -86,10 +86,10 @@ export default async function ProductsPage({
               <h1 className="text-3xl font-bold mb-2">
                 {selectedCategory
                   ? categories?.find((c: {slug: string}) => c.slug === selectedCategory)?.name || 'Products'
-                  : 'All Products'}
+                  : 'همه محصولات'}
               </h1>
               <p className="text-muted-foreground">
-                Browse our latest collection of high-quality products.
+                مجموعه انتخاب شده ما از آخرین روندهای مد را کاوش کنید
               </p>
             </div>
 

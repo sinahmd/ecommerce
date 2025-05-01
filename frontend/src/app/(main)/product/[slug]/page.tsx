@@ -178,7 +178,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to products
+            بازگشت به محصولات
           </Link>
         </div>
 
@@ -214,7 +214,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     {getCategoryInfo().name}
                   </Link>
                 ) : (
-                  <span className="text-muted-foreground">Uncategorized</span>
+                  <span className="text-muted-foreground">بدون دسته بندی</span>
                 )}
               </div>
             </div>
@@ -231,11 +231,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
             {/* Product details section */}
             {(product.brand || product.sku || product.weight || product.dimensions) && (
               <div className="border-t pt-6 mt-8">
-                <h3 className="font-semibold mb-3">Product Details</h3>
+                <h3 className="font-semibold mb-3">جزئیات محصول</h3>
                 <dl className="grid grid-cols-2 gap-2 text-sm">
                   {product.brand && (
                     <>
-                      <dt className="text-muted-foreground">Brand:</dt>
+                      <dt className="text-muted-foreground">برند:</dt>
                       <dd>{product.brand}</dd>
                     </>
                   )}
@@ -247,13 +247,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
                   )}
                   {product.weight && (
                     <>
-                      <dt className="text-muted-foreground">Weight:</dt>
+                      <dt className="text-muted-foreground">وزن:</dt>
                       <dd>{product.weight}</dd>
                     </>
                   )}
                   {product.dimensions && (
                     <>
-                      <dt className="text-muted-foreground">Dimensions:</dt>
+                      <dt className="text-muted-foreground">ابعاد:</dt>
                       <dd>{product.dimensions}</dd>
                     </>
                   )}

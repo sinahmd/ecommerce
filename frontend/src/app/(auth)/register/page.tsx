@@ -38,8 +38,8 @@ export default function RegisterPage() {
       const success = await register(formData);
       if (success) {
         toast({
-          title: "Success",
-          description: "Your account has been created successfully.",
+          title: "موفقیت",
+          description: "حساب کاربری شما با موفقیت ایجاد شد.",
         });
         router.push('/');
       }
@@ -49,10 +49,10 @@ export default function RegisterPage() {
                           err.response?.data?.email?.[0] || 
                           err.response?.data?.username?.[0] || 
                           err.response?.data?.detail || 
-                          "Failed to create account. Please try again.";
+                          "ایجاد حساب کاربری ناموفق بود. لطفا دوباره تلاش کنید.";
       
       toast({
-        title: "Error",
+        title: "خطا",
         description: errorMessage,
         variant: "destructive",
       });
@@ -62,20 +62,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+    <div className="container flex h-screen w-screen flex-col items-center justify-center" dir="rtl">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Create an account
+            ایجاد حساب کاربری
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your details below to create your account
+            برای ایجاد حساب کاربری، اطلاعات خود را وارد کنید
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">ایمیل</Label>
             <Input
               id="email"
               type="email"
@@ -87,7 +87,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">نام کاربری</Label>
             <Input
               id="username"
               type="text"
@@ -98,7 +98,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="first_name">First Name</Label>
+            <Label htmlFor="first_name">نام</Label>
             <Input
               id="first_name"
               type="text"
@@ -109,7 +109,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="last_name">Last Name</Label>
+            <Label htmlFor="last_name">نام خانوادگی</Label>
             <Input
               id="last_name"
               type="text"
@@ -120,7 +120,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">رمز عبور</Label>
             <Input
               id="password"
               type="password"
@@ -131,7 +131,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password2">Confirm Password</Label>
+            <Label htmlFor="password2">تایید رمز عبور</Label>
             <Input
               id="password2"
               type="password"
@@ -142,17 +142,17 @@ export default function RegisterPage() {
           </div>
 
           <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create account"}
+            {isLoading ? "در حال ایجاد حساب..." : "ایجاد حساب کاربری"}
           </Button>
         </form>
 
         <p className="px-8 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          قبلاً حساب کاربری داشته‌اید؟{" "}
           <Link
             href="/login"
             className="underline underline-offset-4 hover:text-primary"
           >
-            Sign in
+            ورود
           </Link>
         </p>
       </div>

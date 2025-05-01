@@ -91,7 +91,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <Button size="sm" variant="secondary" asChild>
               <Link href={`/product/${product.slug}`}>
                 <Eye className="mr-2 h-4 w-4" />
-                View
+                مشاهده
               </Link>
             </Button>
           </div>
@@ -116,7 +116,7 @@ export function ProductCard({ product }: ProductCardProps) {
               disabled={isLoading || currentQuantity >= product.stock}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
-              {isLoading ? "Adding..." : currentQuantity >= product.stock ? "Out of Stock" : "Add to Cart"}
+              {isLoading ? "در حال اضافه کردن" : currentQuantity >= product.stock ? "موجود نیست" : "اضافه به سبد خرید"}
             </Button>
           </div>
         </div>

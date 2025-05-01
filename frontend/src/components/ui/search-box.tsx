@@ -17,7 +17,7 @@ interface SearchBoxProps {
 }
 
 export function SearchBox({
-  placeholder = 'Search...',
+  placeholder = 'جستجو...',
   paramName = 'search',
   className = '',
   autoFocus = false,
@@ -124,8 +124,8 @@ export function SearchBox({
   };
   
   return (
-    <form onSubmit={handleSubmit} className={`relative ${className}`}>
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <form onSubmit={handleSubmit} className={`relative ${className}`} dir="rtl">
+      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       
       <Input
         type="text"
@@ -136,20 +136,21 @@ export function SearchBox({
           setValue(newValue);
           updateSearchParam(newValue);
         }}
-        className="pl-9 pr-9"
+        className="pr-9 pl-9 text-right"
         autoFocus={autoFocus}
+        dir="rtl"
       />
       
       {value && (
         <Button
           variant="ghost"
           size="sm"
-          className="absolute right-0 top-0 h-full px-3 py-2"
+          className="absolute left-0 top-0 h-full px-3 py-2"
           onClick={handleClear}
           type="button"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Clear search</span>
+          <span className="sr-only">پاک کردن جستجو</span>
         </Button>
       )}
     </form>

@@ -68,7 +68,7 @@ export default function CategoriesPage() {
       console.error('Failed to fetch categories:', error);
       setError(errorMessage);
       toast({
-        title: "Error",
+        title: "خطا",
         description: errorMessage,
         variant: "destructive",
       });
@@ -107,35 +107,35 @@ export default function CategoriesPage() {
       <div className="flex justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-      <p className="text-center mt-4 text-gray-500">Loading categories...</p>
+      <p className="text-center mt-4 text-gray-500">در حال بارگذاری دسته‌بندی‌ها...</p>
     </div>
   );
 
   const renderErrorState = () => (
     <div className="bg-white rounded-lg shadow p-8">
       <div className="text-center">
-        <h3 className="text-lg font-medium text-red-600 mb-4">Failed to load categories</h3>
+        <h3 className="text-lg font-medium text-red-600 mb-4">خطا در بارگذاری دسته‌بندی‌ها</h3>
         <p className="text-gray-500 mb-4">{error}</p>
         <Button onClick={handleRefresh}>
-          <ArrowPathIcon className="h-5 w-5 mr-2" />
-          Retry
+          <ArrowPathIcon className="h-5 w-5 ml-2" />
+          تلاش مجدد
         </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="p-6">
+    <div className="p-6" dir="rtl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Categories</h1>
+        <h1 className="text-2xl font-bold">دسته‌بندی‌ها</h1>
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline">
-            <ArrowPathIcon className="h-5 w-5 mr-2" />
-            Refresh
+            <ArrowPathIcon className="h-5 w-5 ml-2" />
+            بارگذاری مجدد
           </Button>
           <Button onClick={() => setIsAddModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Category
+            <PlusIcon className="h-5 w-5 ml-2" />
+            افزودن دسته‌بندی
           </Button>
         </div>
       </div>
@@ -148,17 +148,17 @@ export default function CategoriesPage() {
         <div className="bg-white rounded-lg shadow">
           {categories.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">No categories found. Create your first category!</p>
+              <p className="text-gray-500">هیچ دسته‌بندی یافت نشد. اولین دسته‌بندی خود را ایجاد کنید!</p>
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تصویر</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">توضیحات</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">محصولات</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -181,7 +181,7 @@ export default function CategoriesPage() {
                         </div>
                       ) : (
                         <div className="h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center">
-                          <span className="text-gray-400">No image</span>
+                          <span className="text-gray-400">بدون تصویر</span>
                         </div>
                       )}
                     </td>

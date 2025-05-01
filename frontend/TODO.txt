@@ -1,0 +1,29 @@
+not redirecting to register page, there is a page but why do not go there? //done
+
+order page, should be implement well for destination of diff pages   
+
+fix status of payment and also implement shipping logic 
+
+analyze react query implementation for refactor and can i use more of that?
+
+paginate icon in lists
+
+how handle search ?go to new url like digikala?
+
+fix blog blog/slug
+
+handle address be saved and correctly implement shipping logic 
+
+
+
+
+
+
+
+install vite
+.
+.
+.
+dockerize and deploy :)
+
+

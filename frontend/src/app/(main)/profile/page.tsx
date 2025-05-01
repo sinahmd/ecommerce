@@ -192,14 +192,14 @@ export default function ProfilePage() {
       try {
         await deleteAddress(addressId);
         toast({
-          title: "Success",
-          description: "Address deleted successfully.",
+          title: "موفق",
+          description: "آدرس با موفقیت حذف شد",
         });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         toast({
-          title: "Error",
-          description: "Failed to delete address. Please try again.",
+          title: "خطا",
+          description: "متاسفانه خطایی رخ داده است",
           variant: "destructive",
         });
       }
@@ -210,14 +210,14 @@ export default function ProfilePage() {
     try {
       await setDefaultAddress(addressId);
       toast({
-        title: "Success",
-        description: "Default address updated successfully.",
+        title: "موفق",
+        description: "آدرس پیش فرض با موفقیت تنظیم شد",
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast({
-        title: "Error",
-        description: "Failed to update default address. Please try again.",
+        title: "خطا",
+        description: "متاسفانه خطایی رخ داده است",
         variant: "destructive",
       });
     }
@@ -228,8 +228,8 @@ export default function ProfilePage() {
 
     if (securityForm.new_password !== securityForm.confirm_password) {
       toast({
-        title: "Error",
-        description: "New passwords do not match.",
+        title: "خطا",
+        description: "رمز عبور های جدید مطابقت ندارند",
         variant: "destructive",
       });
       return;
@@ -250,12 +250,12 @@ export default function ProfilePage() {
       });
 
       toast({
-        title: "Success",
-        description: "Your password has been updated successfully.",
+        title: "موفق",
+        description: "رمز عبور با موفقیت تنظیم شد",
       });
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      let errorMessage = "Failed to update password. Please try again.";
+      let errorMessage = "متاسفانه خطایی رخ داده است";
 
       if (axiosError.response?.data?.detail) {
         errorMessage = axiosError.response.data.detail;
@@ -288,8 +288,8 @@ export default function ProfilePage() {
 
     // In a real app, you would save these preferences to the API
     toast({
-      title: "Success",
-      description: "Notification preferences updated.",
+      title: "موفق",
+      description: "تنظیمات اطلاع‌رسانی با موفقیت تنظیم شد",
     });
   };
 
@@ -317,38 +317,42 @@ export default function ProfilePage() {
 
   const getStatusDescription = (status: string): string => {
     switch (status.toLowerCase()) {
-      case 'pending': return 'Awaiting Payment';
-      case 'processing': return 'Payment Confirmed, Processing Order';
-      case 'shipped': return 'Order Shipped';
-      case 'delivered': return 'Order Delivered';
-      case 'cancelled': return 'Order Cancelled';
-      case 'failed': return 'Payment Failed';
-      case 'refunded': return 'Order Refunded';
+      case 'pending': return 'در انتظار پرداخت';
+      case 'processing': return 'تایید پرداخت، در حال پردازش سفارش';
+      case 'shipped': return 'ارسال شده';
+      case 'delivered': return 'تحویل داده شده';
+      case 'cancelled': return 'لغو شده';
+      case 'failed': return 'پرداخت ناموفق';
+      case 'refunded': return 'بازپرداخت شده';
       default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
   return (
     <div className="container my-8">
-      <h1 className="text-3xl font-bold mb-8">My Account</h1>
+      <h1 className="text-3xl font-bold mb-8">حساب کاربری من</h1>
 
-      <Tabs defaultValue="personal" className="space-y-4">
+      <Tabs defaultValue="personal" className="space-y-4" dir="rtl">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="personal" className="flex items-center">
+            اطلاعات شخصی
             <UserCircle className="mr-2 h-4 w-4" />
-            Personal Info
           </TabsTrigger>
           <TabsTrigger value="addresses" className="flex items-center">
+            آدرس‌ها
             <Home className="mr-2 h-4 w-4" />
-            Addresses
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center">
+            امنیت
             <Lock className="mr-2 h-4 w-4" />
-            Security
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex items-center">
+          <TabsTrigger 
+            value="orders" 
+            className="flex items-center"
+            onClick={() => router.push('/account/orders')}
+          >
+            سفارش‌ها
             <Package className="mr-2 h-4 w-4" />
-            Orders
           </TabsTrigger>
         </TabsList>
 
@@ -356,14 +360,14 @@ export default function ProfilePage() {
         <TabsContent value="personal">
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Update your personal information.</CardDescription>
+              <CardTitle>اطلاعات شخصی</CardTitle>
+              <CardDescription>اطلاعات شخصی خود را به‌روز کنید.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleProfileUpdate}>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first_name">First Name</Label>
+                    <Label htmlFor="first_name">نام</Label>
                     <Input
                       id="first_name"
                       value={profileForm.first_name}
@@ -371,7 +375,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last_name">Last Name</Label>
+                    <Label htmlFor="last_name">نام خانوادگی</Label>
                     <Input
                       id="last_name"
                       value={profileForm.last_name}
@@ -381,7 +385,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">آدرس ایمیل</Label>
                   <Input
                     id="email"
                     type="email"
@@ -389,11 +393,11 @@ export default function ProfilePage() {
                     onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                     disabled
                   />
-                  <p className="text-xs text-muted-foreground">Email address cannot be changed directly for security reasons.</p>
+                  <p className="text-xs text-muted-foreground">آدرس ایمیل به دلایل امنیتی قابل تغییر مستقیم نیست.</p>
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">نام کاربری</Label>
                   <Input
                     id="username"
                     value={profileForm.username}
@@ -402,7 +406,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">شماره تلفن</Label>
                   <Input
                     id="phone"
                     value={profileForm.phone}
@@ -411,20 +415,20 @@ export default function ProfilePage() {
                 </div>
 
                 <Button type="submit" disabled={isUpdating}>
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                  {isUpdating ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
                 </Button>
               </form>
             </CardContent>
 
             <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how we communicate with you.</CardDescription>
+              <CardTitle>تنظیمات اطلاع‌رسانی</CardTitle>
+              <CardDescription>نحوه ارتباط ما با شما را مدیریت کنید.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="email_offers" className="font-normal">Marketing Emails</Label>
-                  <p className="text-sm text-muted-foreground">Receive emails about new products and sales</p>
+                  <Label htmlFor="email_offers" className="font-normal">ایمیل‌های بازاریابی</Label>
+                  <p className="text-sm text-muted-foreground">دریافت ایمیل درباره محصولات جدید و حراج‌ها</p>
                 </div>
                 <Switch
                   id="email_offers"
@@ -435,8 +439,8 @@ export default function ProfilePage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="order_updates" className="font-normal">Order Updates</Label>
-                  <p className="text-sm text-muted-foreground">Receive email notifications about your orders</p>
+                  <Label htmlFor="order_updates" className="font-normal">به‌روزرسانی سفارش</Label>
+                  <p className="text-sm text-muted-foreground">دریافت اطلاعیه‌های ایمیل درباره سفارش‌های شما</p>
                 </div>
                 <Switch
                   id="order_updates"
@@ -447,8 +451,8 @@ export default function ProfilePage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="newsletter" className="font-normal">Newsletter</Label>
-                  <p className="text-sm text-muted-foreground">Receive our weekly newsletter with industry news</p>
+                  <Label htmlFor="newsletter" className="font-normal">خبرنامه</Label>
+                  <p className="text-sm text-muted-foreground">دریافت خبرنامه هفتگی ما با اخبار صنعت</p>
                 </div>
                 <Switch
                   id="newsletter"
@@ -465,12 +469,12 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>My Addresses</CardTitle>
-                <CardDescription>Manage your shipping and billing addresses.</CardDescription>
+                <CardTitle>آدرس‌های من</CardTitle>
+                <CardDescription>آدرس‌های ارسال و صورتحساب خود را مدیریت کنید.</CardDescription>
               </div>
               <Button onClick={() => openAddressDialog()} className="flex items-center">
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Address
+                <Plus className="ml-2 h-4 w-4" />
+                افزودن آدرس جدید
               </Button>
             </CardHeader>
             <CardContent>
@@ -480,7 +484,7 @@ export default function ProfilePage() {
                 </div>
               ) : addresses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  You haven&apos;t added any addresses yet.
+                  شما هنوز هیچ آدرسی اضافه نکرده‌اید.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -489,17 +493,17 @@ export default function ProfilePage() {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium">{address.address_type.charAt(0).toUpperCase() + address.address_type.slice(1)} Address</h3>
-                            {address.is_default && <Badge variant="outline" className="bg-primary/10">Default</Badge>}
+                            <h3 className="font-medium">{address.address_type === 'shipping' ? 'آدرس ارسال' : 'آدرس صورتحساب'}</h3>
+                            {address.is_default && <Badge variant="outline" className="bg-primary/10">پیش‌فرض</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {address.street}, {address.city}, {address.state} {address.zipcode}, {address.country}
+                            {address.street}، {address.city}، {address.state} {address.zipcode}، {address.country}
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openAddressDialog(address)}>Edit</Button>
+                          <Button variant="outline" size="sm" onClick={() => openAddressDialog(address)}>ویرایش</Button>
                           {!address.is_default && (
-                            <Button variant="outline" size="sm" onClick={() => handleSetDefaultAddress(address.id)}>Set Default</Button>
+                            <Button variant="outline" size="sm" onClick={() => handleSetDefaultAddress(address.id)}>تنظیم به عنوان پیش‌فرض</Button>
                           )}
                           <Button variant="outline" size="sm" onClick={() => handleAddressDelete(address.id)}>
                             <Trash2 className="h-4 w-4" />
@@ -516,31 +520,31 @@ export default function ProfilePage() {
           <Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{currentAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
+                <DialogTitle>{currentAddress ? 'ویرایش آدرس' : 'افزودن آدرس جدید'}</DialogTitle>
                 <DialogDescription>
-                  {currentAddress ? 'Update your address details below.' : 'Enter your address details below.'}
+                  {currentAddress ? 'جزئیات آدرس خود را در زیر به‌روز کنید.' : 'جزئیات آدرس خود را در زیر وارد کنید.'}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="address_type">Address Type</Label>
+                  <Label htmlFor="address_type">نوع آدرس</Label>
                   <Select
                     value={addressForm.address_type}
                     onValueChange={(value: 'shipping' | 'billing') => setAddressForm({ ...addressForm, address_type: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select address type" />
+                      <SelectValue placeholder="نوع آدرس را انتخاب کنید" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="shipping">Shipping</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
+                      <SelectItem value="shipping">آدرس ارسال</SelectItem>
+                      <SelectItem value="billing">آدرس صورتحساب</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="street">Street Address</Label>
+                  <Label htmlFor="street">آدرس خیابان</Label>
                   <Textarea
                     id="street"
                     value={addressForm.street}
@@ -550,7 +554,7 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">شهر</Label>
                     <Input
                       id="city"
                       value={addressForm.city}
@@ -558,7 +562,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">State/Province</Label>
+                    <Label htmlFor="state">استان</Label>
                     <Input
                       id="state"
                       value={addressForm.state}
@@ -569,7 +573,7 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="zipcode">ZIP/Postal Code</Label>
+                    <Label htmlFor="zipcode">کد پستی</Label>
                     <Input
                       id="zipcode"
                       value={addressForm.zipcode}
@@ -577,7 +581,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country">کشور</Label>
                     <Input
                       id="country"
                       value={addressForm.country}
@@ -594,16 +598,16 @@ export default function ProfilePage() {
                     onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
-                  <Label htmlFor="is_default" className="font-normal">Set as default address for {addressForm.address_type}</Label>
+                  <Label htmlFor="is_default" className="font-normal mr-2">تنظیم به عنوان آدرس پیش‌فرض برای {addressForm.address_type === 'shipping' ? 'ارسال' : 'صورتحساب'}</Label>
                 </div>
               </div>
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddressDialogOpen(false)}>
-                  Cancel
+                  انصراف
                 </Button>
                 <Button onClick={handleAddressSave} disabled={isAddressUpdating}>
-                  {isAddressUpdating ? 'Saving...' : 'Save Address'}
+                  {isAddressUpdating ? 'در حال ذخیره...' : 'ذخیره آدرس'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -614,13 +618,13 @@ export default function ProfilePage() {
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>Update your password to maintain account security.</CardDescription>
+              <CardTitle>تغییر رمز عبور</CardTitle>
+              <CardDescription>رمز عبور خود را برای حفظ امنیت حساب به‌روز کنید.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current_password">Current Password</Label>
+                  <Label htmlFor="current_password">رمز عبور فعلی</Label>
                   <Input
                     id="current_password"
                     type="password"
@@ -631,7 +635,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="new_password">New Password</Label>
+                  <Label htmlFor="new_password">رمز عبور جدید</Label>
                   <Input
                     id="new_password"
                     type="password"
@@ -642,7 +646,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm_password">Confirm New Password</Label>
+                  <Label htmlFor="confirm_password">تایید رمز عبور جدید</Label>
                   <Input
                     id="confirm_password"
                     type="password"
@@ -653,7 +657,7 @@ export default function ProfilePage() {
                 </div>
 
                 <Button type="submit" disabled={isPasswordUpdating}>
-                  {isPasswordUpdating ? 'Updating...' : 'Update Password'}
+                  {isPasswordUpdating ? 'در حال به‌روزرسانی...' : 'به‌روزرسانی رمز عبور'}
                 </Button>
               </form>
             </CardContent>
@@ -664,8 +668,8 @@ export default function ProfilePage() {
         <TabsContent value="orders">
           <Card>
             <CardHeader>
-              <CardTitle>Order History</CardTitle>
-              <CardDescription>View your past orders and their status.</CardDescription>
+              <CardTitle>تاریخچه سفارش‌ها</CardTitle>
+              <CardDescription>سفارش‌های قبلی خود و وضعیت آن‌ها را مشاهده کنید.</CardDescription>
             </CardHeader>
             <CardContent>
               {ordersLoading ? (
@@ -674,7 +678,7 @@ export default function ProfilePage() {
                 </div>
               ) : orders?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  You haven&apos;t placed any orders yet.
+                  شما هنوز سفارشی ثبت نکرده‌اید.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -682,9 +686,9 @@ export default function ProfilePage() {
                     <div key={order.id} className="border rounded-md p-4">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-medium">Order #{order.id}</h3>
+                          <h3 className="font-medium">سفارش #{order.id}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Placed on {new Date(order.created_at).toLocaleDateString()}
+                            ثبت شده در {new Date(order.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <Badge
@@ -699,11 +703,11 @@ export default function ProfilePage() {
                           <div key={item.id || `item-${Math.random()}`} className="flex justify-between items-center py-2 border-b last:border-0">
                             <div className="flex items-center">
                               <span className="font-medium">{item.quantity || 1}x</span>
-                              <span className="ml-2">
-                                {item.product?.name || 'Product'}
+                              <span className="mr-2">
+                                {item.product?.name || 'محصول'}
                               </span>
                             </div>
-                            <span>${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}</span>
+                            <span>{typeof item.price === 'number' ? item.price.toFixed(2) : item.price} تومان</span>
                           </div>
                         ))}
                       </div>
@@ -711,26 +715,26 @@ export default function ProfilePage() {
                       {/* Payment Transactions */}
                       {order.transactions && order.transactions.length > 0 && (
                         <div className="mt-4 pt-4 border-t">
-                          <h4 className="font-medium mb-2">Payment Information</h4>
+                          <h4 className="font-medium mb-2">اطلاعات پرداخت</h4>
                           {order.transactions.map((transaction) => (
                             <div key={transaction.id || `trans-${Math.random()}`} className="text-sm">
                               <div className="flex justify-between">
-                                <span>Transaction ID:</span>
-                                <span>{transaction.ref_id || (transaction.authority ? transaction.authority.slice(0, 10) + '...' : 'N/A')}</span>
+                                <span>شناسه تراکنش:</span>
+                                <span>{transaction.ref_id || (transaction.authority ? transaction.authority.slice(0, 10) + '...' : 'نامشخص')}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Status:</span>
+                                <span>وضعیت:</span>
                                 <span className={transaction.status === 'paid' ? 'text-green-600' : 'text-amber-600'}>
-                                  {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'Unknown'}
+                                  {transaction.status === 'paid' ? 'پرداخت شده' : (transaction.status === 'pending' ? 'در انتظار پرداخت' : 'نامشخص')}
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Date:</span>
-                                <span>{transaction.created_at ? new Date(transaction.created_at).toLocaleString() : 'N/A'}</span>
+                                <span>تاریخ:</span>
+                                <span>{transaction.created_at ? new Date(transaction.created_at).toLocaleString() : 'نامشخص'}</span>
                               </div>
                               {transaction.card_pan && (
                                 <div className="flex justify-between">
-                                  <span>Card:</span>
+                                  <span>کارت:</span>
                                   <span>{transaction.card_pan}</span>
                                 </div>
                               )}
@@ -740,17 +744,17 @@ export default function ProfilePage() {
                       )}
 
                       <div className="mt-4 pt-4 border-t flex justify-between">
-                        <span>Total</span>
-                        <span className="font-medium">${typeof order.total_price === 'number' ? order.total_price.toFixed(2) : order.total_price || '0.00'}</span>
+                        <span>جمع کل</span>
+                        <span className="font-medium">{typeof order.total_price === 'number' ? order.total_price.toFixed(2) : order.total_price || '0.00'} تومان</span>
                       </div>
 
                       <div className="mt-4 flex justify-end">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/orders/${order.id}`)}
+                          onClick={() => router.push(`/account/orders/${order.id}`)}
                         >
-                          View Full Details
+                          مشاهده جزئیات کامل
                         </Button>
                       </div>
                     </div>
@@ -764,8 +768,8 @@ export default function ProfilePage() {
 
       <div className="mt-8 text-center">
         <Button variant="outline" onClick={handleLogout} className="flex items-center mx-auto">
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          <LogOut className="ml-2 h-4 w-4" />
+          خروج از حساب
         </Button>
       </div>
     </div>
